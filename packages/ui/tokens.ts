@@ -1,0 +1,57 @@
+export const STEADY = {
+  bg: {
+    light:       '#F4F1EC',
+    surface:     '#FFFFFF',
+    sunken:      '#EDE8E0',
+    dark:        '#0E1216',
+    darkSurface: '#161B21',
+    darkSunken:  '#0A0D11',
+  },
+  accent: {
+    base:     '#2E7D7A',
+    deep:     '#1F5856',
+    soft:     '#D7E8E6',
+    softDark: '#15302E',
+    on:       '#FFFFFF',
+  },
+  emergency: {
+    base:     '#C8312B',
+    deep:     '#8E1F1B',
+    soft:     '#F5DCDA',
+    softDark: '#3A1311',
+    on:       '#FFFFFF',
+  },
+  warn: {
+    base:     '#D88820',
+    soft:     '#F8E8CC',
+    softDark: '#3A2810',
+  },
+  ink: {
+    primary:    '#1A1F24',
+    secondary:  '#5A6470',
+    tertiary:   '#8B95A1',
+    onDark:     '#F2F4F7',
+    onDarkSec:  '#A8B2BD',
+    onDarkTer:  '#6C7682',
+  },
+  border: {
+    light: 'rgba(20,30,40,0.08)',
+    dark:  'rgba(255,255,255,0.08)',
+  },
+  s: {
+    xs:   4,
+    sm:   8,
+    md:   12,
+    lg:   16,
+    xl:   24,
+    xxl:  32,
+    xxxl: 48,
+  },
+  r: {
+    sm:   8,
+    md:   12,
+    lg:   18,
+    xl:   24,
+    pill: 999,
+  },
+} as const

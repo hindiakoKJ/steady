@@ -1,0 +1,61 @@
+{
+  "expo": {
+    "name": "Steady",
+    "slug": "steady",
+    "scheme": "steady",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0f172a"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.steady.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Steady needs your location to log weather conditions during a seizure and to send your location to family contacts.",
+        "NSMotionUsageDescription": "Steady uses motion sensors to detect potential seizure activity while the app is open."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0f172a"
+      },
+      "package": "com.steady.app",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "VIBRATE",
+        "SEND_SMS"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-sensors",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow Steady to use your location to record weather and send your position to family during a seizure."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#10b981"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

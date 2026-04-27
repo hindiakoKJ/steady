@@ -1,0 +1,38 @@
+{
+  "name": "steady",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "db:generate": "turbo db:generate",
+    "db:migrate": "cd packages/db && npx prisma migrate dev",
+    "db:push": "cd packages/db && npx prisma db push",
+    "db:studio": "cd packages/db && npx prisma studio"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.3",
+    "typescript": "^5.7.2",
+    "expo": "~53.0.0",
+    "@expo/server": "~0.5.3",
+    "metro": "0.82.5",
+    "metro-babel-transformer": "0.82.5",
+    "metro-cache": "0.82.5",
+    "metro-cache-key": "0.82.5",
+    "metro-config": "0.82.5",
+    "metro-core": "0.82.5",
+    "metro-file-map": "0.82.5",
+    "metro-resolver": "0.82.5",
+    "metro-runtime": "0.82.5",
+    "metro-source-map": "0.82.5",
+    "metro-symbolicate": "0.82.5",
+    "metro-transform-plugins": "0.82.5",
+    "metro-transform-worker": "0.82.5"
+  },
+  "overrides": {
+    "expo": "~53.0.0"
+  }
+}

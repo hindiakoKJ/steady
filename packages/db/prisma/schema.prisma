@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HOUSEHOLD — the privacy boundary. Every query is scoped to this ID.
+// ─────────────────────────────────────────────────────────────────────────────
+model Household {
+  id        String             @id @default(cuid())
+  alias     String             // "The Cruz Family" — nickname, not legal name
+  createdAt DateTime           @default(now())
+
+  users     User[]
+  patients  Patient[]
+  contacts  EmergencyContact[]
+  logs      SeizureLog[]
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// USER — only email is required. No fullName. No phoneNumber.
+// ─────────────────────────────────────────────────────────────────────────────
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  householdId  String
+  household    Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  createdAt    DateTime  @default(now())
+
+  // NO fullName field — architectural privacy enforcement
+  // NO phoneNumber field — architectural privacy enforcement
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PATIENT — identified by nickname only. Can be a child, adult, or elderly.
+// ─────────────────────────────────────────────────────────────────────────────
+model Patient {
+  id          String       @id @default(cuid())
+  nickname    String       // "Ate Mia", "Kuya Ben", "Lolo Ernesto" — alias only
+  birthYear   Int?         // Optional — enables age-based neurologist reports
+  notes       String?      // Optional caregiver notes (triggers, medication)
+  householdId String
+  household   Household    @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  logs        SeizureLog[]
+  createdAt   DateTime     @default(now())
+
+  // NO fullName field — architecturally enforced; cannot be added without a reviewed migration
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SEIZURE LOG — the core clinical record. Weather data enables the
+// Neurologist Summary (Frequency vs Temperature vs Duration report).
+// householdId is denormalized here so a WHERE householdId = $1 always works
+// without a join — critical for the HouseholdID isolation guarantee.
+// ─────────────────────────────────────────────────────────────────────────────
+model SeizureLog {
+  id               String    @id @default(cuid())
+  patientId        String
+  householdId      String
+  startedAt        DateTime
+  endedAt          DateTime?
+  durationSeconds  Int?
+  weatherTempC     Float?
+  weatherCondition String?   // "Clear", "Rain", "Thunderstorm", etc.
+  weatherHumidity  Int?
+  latitude         Float?    // GPS at seizure time (for BEACON map link)
+  longitude        Float?
+  beaconFiredAt    DateTime? // When BEACON was activated during this event
+  notes            String?
+
+  patient   Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EMERGENCY CONTACT — phoneNumber is OPTIONAL. Contacts can receive
+// push-only alerts without providing a phone number.
+// ─────────────────────────────────────────────────────────────────────────────
+model EmergencyContact {
+  id          String    @id @default(cuid())
+  householdId String
+  nickname    String    // "Lola", "Tito Jun" — alias only
+  phoneNumber String?   // Optional — for SMS BEACON
+  pushToken   String?   // Expo push token for in-app alerts
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+}
