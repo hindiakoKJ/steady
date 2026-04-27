@@ -17,7 +17,7 @@
     "@repo/ui": "*",
     "axios": "^1.7.9",
     "expo": "~53.0.0",
-    "expo-constants": "~17.1.8",
+    "expo-constants": "~17.0.8",
     "expo-location": "~18.1.6",
     "expo-notifications": "~0.31.5",
     "expo-print": "~14.1.4",
