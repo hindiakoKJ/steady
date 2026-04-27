@@ -18,6 +18,14 @@ module.exports = function (api) {
               ) {
                 path.replaceWith(t.stringLiteral('app'))
               }
+              if (
+                t.isMemberExpression(path.node.object) &&
+                t.isIdentifier(path.node.object.object, { name: 'process' }) &&
+                t.isIdentifier(path.node.object.property, { name: 'env' }) &&
+                t.isIdentifier(path.node.property, { name: 'EXPO_ROUTER_IMPORT_MODE' })
+              ) {
+                path.replaceWith(t.stringLiteral('sync'))
+              }
             },
           },
         }
