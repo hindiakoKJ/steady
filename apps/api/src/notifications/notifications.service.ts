@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { Expo, ExpoPushMessage } from 'expo-server-sdk'
+import { EmergencyContact } from '@repo/db'
 import { PrismaService } from '../prisma/prisma.service'
 
 @Injectable()
@@ -27,8 +28,8 @@ export class NotificationsService {
     if (contacts.length === 0) return
 
     const messages: ExpoPushMessage[] = contacts
-      .filter((c) => c.pushToken && Expo.isExpoPushToken(c.pushToken))
-      .map((c) => ({
+      .filter((c: EmergencyContact) => c.pushToken && Expo.isExpoPushToken(c.pushToken))
+      .map((c: EmergencyContact) => ({
         to: c.pushToken!,
         sound: 'default' as const,
         title: '🚨 STEADY BEACON',

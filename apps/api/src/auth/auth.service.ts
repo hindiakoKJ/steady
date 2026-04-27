@@ -1,6 +1,7 @@
 import { Injectable, ConflictException, UnauthorizedException } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import * as bcrypt from 'bcryptjs'
+import { Prisma } from '@repo/db'
 import { PrismaService } from '../prisma/prisma.service'
 import { RegisterDto } from './dto/register.dto'
 import { LoginDto } from './dto/login.dto'
@@ -19,7 +20,7 @@ export class AuthService {
     const passwordHash = await bcrypt.hash(dto.password, 10)
 
     // Create household → user → first patient in a single transaction
-    const result = await this.prisma.$transaction(async (tx) => {
+    const result = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const household = await tx.household.create({
         data: { alias: dto.householdAlias },
       })
