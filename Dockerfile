@@ -28,4 +28,4 @@ RUN npm run build -w @repo/api
 EXPOSE 3001
 
 # Run pending migrations then start
-CMD ["sh", "-c", "npx prisma migrate deploy --schema=packages/db/prisma/schema.prisma && node apps/api/dist/main"]
+CMD ["sh", "-c", "npx prisma db push --schema=packages/db/prisma/schema.prisma --accept-data-loss && node apps/api/dist/main"]
