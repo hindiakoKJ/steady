@@ -12,7 +12,8 @@
       "distribution": "internal",
       "env": {
         "EXPO_ROUTER_APP_ROOT": "app",
-        "EXPO_ROUTER_IMPORT_MODE": "sync"
+        "EXPO_ROUTER_IMPORT_MODE": "sync",
+        "EXPO_PUBLIC_API_URL": "https://steady-production-6eab.up.railway.app"
       }
     },
     "production": {
