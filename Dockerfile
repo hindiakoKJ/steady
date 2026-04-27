@@ -22,6 +22,9 @@ COPY apps/api/ ./apps/api/
 # ── Generate Prisma client ────────────────────────────────────────────────────
 RUN npx prisma generate --schema=packages/db/prisma/schema.prisma
 
+# ── Compile @repo/db to JS (so Node can require it at runtime) ────────────────
+RUN npm run build -w @repo/db
+
 # ── Compile NestJS API ────────────────────────────────────────────────────────
 RUN npm run build -w @repo/api
 
