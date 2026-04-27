@@ -23,7 +23,7 @@ COPY apps/api/ ./apps/api/
 RUN npx prisma generate --schema=packages/db/prisma/schema.prisma
 
 # ── Compile NestJS API ────────────────────────────────────────────────────────
-RUN cd apps/api && npm run build
+RUN npm run build -w @repo/api
 
 EXPOSE 3001
 
