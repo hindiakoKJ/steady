@@ -1,36 +1,55 @@
 import { useEffect, useState } from 'react'
-import { Stack } from 'expo-router'
+import { Stack, SplashScreen } from 'expo-router'
 import { useRouter, useSegments } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { authStorage } from '@/lib/auth'
 import { registerForPushNotifications } from '@/lib/notifications'
 
+// Keep the native splash screen visible while we check auth.
+// expo-router will auto-hide it once the root layout renders,
+// but we re-prevent it here so we control the timing.
+SplashScreen.preventAutoHideAsync()
+
 export default function RootLayout() {
   const router = useRouter()
   const segments = useSegments()
-  const [checked, setChecked] = useState(false)
+  const [appIsReady, setAppIsReady] = useState(false)
 
   useEffect(() => {
     const checkAuth = async () => {
-      const loggedIn = await authStorage.isLoggedIn()
-      const inAuthGroup = segments[0] === 'auth'
+      try {
+        const loggedIn = await authStorage.isLoggedIn()
+        const inAuthGroup = segments[0] === 'auth'
 
-      if (!loggedIn && !inAuthGroup) {
+        if (!loggedIn && !inAuthGroup) {
+          router.replace('/auth/login')
+        } else if (loggedIn && inAuthGroup) {
+          router.replace('/(tabs)')
+        }
+        if (loggedIn) {
+          // Register for push notifications silently after auth — non-blocking
+          registerForPushNotifications().catch(() => {})
+        }
+      } catch {
+        // Auth check failed — default to login
         router.replace('/auth/login')
-      } else if (loggedIn && inAuthGroup) {
-        router.replace('/(tabs)')
+      } finally {
+        setAppIsReady(true)
       }
-      if (loggedIn) {
-        // Register for push notifications silently after auth — non-blocking
-        registerForPushNotifications().catch(() => {})
-      }
-      setChecked(true)
     }
     checkAuth()
   }, [segments])
 
-  if (!checked) return null
+  useEffect(() => {
+    if (appIsReady) {
+      SplashScreen.hideAsync().catch(() => {})
+    }
+  }, [appIsReady])
 
+  // IMPORTANT: Never return null from the root layout.
+  // expo-router needs <Stack> to always be present to initialize the
+  // navigation tree. The native splash screen covers the UI during
+  // the async auth check above.
   return (
     <>
       <StatusBar style="light" backgroundColor="#0f172a" />
