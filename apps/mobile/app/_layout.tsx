@@ -1,55 +1,55 @@
-import { useEffect, useState } from 'react'
-import { Stack, SplashScreen } from 'expo-router'
-import { useRouter, useSegments } from 'expo-router'
+import { useEffect } from 'react'
+import { Stack, SplashScreen, useRouter } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
+import * as Notifications from 'expo-notifications'
 import { authStorage } from '@/lib/auth'
 import { registerForPushNotifications } from '@/lib/notifications'
 
-// Keep the native splash screen visible while we check auth.
-// expo-router will auto-hide it once the root layout renders,
-// but we re-prevent it here so we control the timing.
+// Prevent the native splash from auto-hiding before we finish the auth check.
 SplashScreen.preventAutoHideAsync()
+
+// Set up the notification handler here so it runs once, at the module level,
+// but AFTER expo-splash-screen has been initialized.
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+})
 
 export default function RootLayout() {
   const router = useRouter()
-  const segments = useSegments()
-  const [appIsReady, setAppIsReady] = useState(false)
 
   useEffect(() => {
-    const checkAuth = async () => {
+    // Run the auth check ONCE on mount.
+    // We deliberately do NOT include router or segments in the dependency
+    // array — we only want this to run once, not on every navigation event.
+    const bootstrap = async () => {
       try {
         const loggedIn = await authStorage.isLoggedIn()
-        const inAuthGroup = segments[0] === 'auth'
-
-        if (!loggedIn && !inAuthGroup) {
-          router.replace('/auth/login')
-        } else if (loggedIn && inAuthGroup) {
-          router.replace('/(tabs)')
-        }
         if (loggedIn) {
-          // Register for push notifications silently after auth — non-blocking
+          // Already signed in — register push silently
           registerForPushNotifications().catch(() => {})
+          router.replace('/(tabs)')
+        } else {
+          router.replace('/auth/login')
         }
       } catch {
-        // Auth check failed — default to login
+        // If AsyncStorage fails, default to login
         router.replace('/auth/login')
       } finally {
-        setAppIsReady(true)
+        // Always hide the splash once we know where to go
+        SplashScreen.hideAsync().catch(() => {})
       }
     }
-    checkAuth()
-  }, [segments])
+    bootstrap()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
-  useEffect(() => {
-    if (appIsReady) {
-      SplashScreen.hideAsync().catch(() => {})
-    }
-  }, [appIsReady])
-
-  // IMPORTANT: Never return null from the root layout.
-  // expo-router needs <Stack> to always be present to initialize the
-  // navigation tree. The native splash screen covers the UI during
-  // the async auth check above.
+  // Always render the Stack — expo-router needs the navigator in the tree
+  // from the very first render. The native splash screen covers the UI
+  // while the auth check above runs asynchronously.
   return (
     <>
       <StatusBar style="light" backgroundColor="#0f172a" />

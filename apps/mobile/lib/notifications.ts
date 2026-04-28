@@ -3,13 +3,9 @@ import { Platform } from 'react-native'
 import { notificationsApi } from './api'
 import { authStorage } from './auth'
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-})
+// NOTE: setNotificationHandler is intentionally NOT called here.
+// It is called once in app/_layout.tsx at module level to avoid
+// multiple registrations across hot-reloads.
 
 export async function registerForPushNotifications(): Promise<string | null> {
   if (Platform.OS === 'web') return null
