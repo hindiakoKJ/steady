@@ -72,7 +72,7 @@ model SeizureLog {
 
   // ── Clinical details (entered after episode ends) ────────────────────────
   seizureType      String?   // "tonic-clonic" | "absence" | "focal" | "myoclonic" | "unknown"
-  triggers         String[]  // ["missed_meds","stress","sleep","heat","illness","unknown"]
+  triggers         String[]  @default([])  // ["missed_meds","stress","sleep","heat","illness","unknown"]
   consciousnessLost Boolean?
   injuryOccurred   Boolean?
   postictalMinutes Int?      // How many minutes until fully recovered
