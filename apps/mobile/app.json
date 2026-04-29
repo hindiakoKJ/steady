@@ -25,7 +25,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#5B5BD6"
       },
-      "package": "com.steady.app",
+      "package": "ph.hnscorpph.steady",
       "versionCode": 1,
       "extractNativeLibs": true,
       "permissions": [
