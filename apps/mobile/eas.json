@@ -24,8 +24,16 @@
     },
     "production": {
       "autoIncrement": true,
+      "credentialsSource": "remote",
       "android": {
         "buildType": "app-bundle"
+      },
+      "env": {
+        "EXPO_ROUTER_APP_ROOT": "app",
+        "EXPO_ROUTER_IMPORT_MODE": "lazy",
+        "EXPO_PUBLIC_API_URL": "https://steady-production-6eab.up.railway.app",
+        "EXPO_PUBLIC_OPENWEATHER_KEY": "SET_VIA_EAS_SECRET",
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       }
     }
   },
