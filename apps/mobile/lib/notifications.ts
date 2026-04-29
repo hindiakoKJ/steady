@@ -1,39 +1,10 @@
-import * as Notifications from 'expo-notifications'
-import { Platform } from 'react-native'
-import { notificationsApi } from './api'
-import { authStorage } from './auth'
-
-// NOTE: setNotificationHandler is intentionally NOT called here.
-// It is called once in app/_layout.tsx at module level to avoid
-// multiple registrations across hot-reloads.
+// expo-notifications removed — push notifications require FCM credentials
+// to be configured in EAS before re-adding. Stubbed for now.
 
 export async function registerForPushNotifications(): Promise<string | null> {
-  if (Platform.OS === 'web') return null
-
-  const { status: existing } = await Notifications.getPermissionsAsync()
-  let finalStatus = existing
-
-  if (existing !== 'granted') {
-    const { status } = await Notifications.requestPermissionsAsync()
-    finalStatus = status
-  }
-
-  if (finalStatus !== 'granted') return null
-
-  const token = (await Notifications.getExpoPushTokenAsync()).data
-  return token
+  return null
 }
 
-export async function registerPushTokenWithApi(contactId: string) {
-  const isLoggedIn = await authStorage.isLoggedIn()
-  if (!isLoggedIn) return
-
-  const token = await registerForPushNotifications()
-  if (!token) return
-
-  try {
-    await notificationsApi.registerToken(token, contactId)
-  } catch {
-    // Non-critical — push registration failure shouldn't block the user
-  }
+export async function registerPushTokenWithApi(_contactId: string): Promise<void> {
+  // no-op until push notifications are configured
 }

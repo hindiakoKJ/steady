@@ -1,7 +1,7 @@
 import { View, Text, ScrollView, Pressable, StyleSheet, Linking } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
-import { Phone } from 'lucide-react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { STEADY } from '@repo/ui'
 
 const STEPS = [
@@ -83,7 +83,7 @@ export default function BystanderMode() {
       {/* Action bar */}
       <View style={s.actionStack}>
         <Pressable style={s.call911Btn} onPress={() => Linking.openURL('tel:911')}>
-          <Phone size={20} color="#fff" />
+          <Ionicons name="call-outline" size={20} color="#fff" />
           <Text style={s.call911Text}>Call 911</Text>
         </Pressable>
         <Pressable style={s.familyBtn} onPress={() => router.back()}>

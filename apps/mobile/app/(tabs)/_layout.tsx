@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native'
 import { Tabs } from 'expo-router'
-import { Shield, Clock, Settings } from 'lucide-react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { STEADY } from '@repo/ui'
 
 export default function TabLayout() {
@@ -29,21 +29,28 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Emergency',
-          tabBarIcon: ({ color, size }) => <Shield size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="shield-checkmark-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="history"
         options={{
           title: 'History',
-          tabBarIcon: ({ color, size }) => <Clock size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="time-outline" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="learn"
+        options={{
+          title: 'Learn',
+          tabBarIcon: ({ color, size }) => <Ionicons name="book-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
           title: 'Settings',
-          tabBarIcon: ({ color, size }) => <Settings size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="settings-outline" size={size} color={color} />,
         }}
       />
     </Tabs>

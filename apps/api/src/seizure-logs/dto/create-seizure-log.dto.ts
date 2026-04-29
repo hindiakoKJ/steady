@@ -1,4 +1,4 @@
-import { IsString, IsISO8601, IsOptional, IsNumber, IsInt, Min, Max } from 'class-validator'
+import { IsString, IsISO8601, IsOptional, IsNumber, IsInt, IsIn, Min, Max } from 'class-validator'
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
 
 export class CreateSeizureLogDto {
@@ -9,6 +9,11 @@ export class CreateSeizureLogDto {
   @ApiProperty({ example: '2025-06-15T14:32:00.000Z' })
   @IsISO8601()
   startedAt: string
+
+  @ApiPropertyOptional({ enum: ['AURA', 'BEACON', 'PASSIVE', 'MANUAL'] })
+  @IsOptional()
+  @IsIn(['AURA', 'BEACON', 'PASSIVE', 'MANUAL'])
+  triggeredBy?: string
 
   @ApiPropertyOptional({ example: 32.1 })
   @IsOptional()

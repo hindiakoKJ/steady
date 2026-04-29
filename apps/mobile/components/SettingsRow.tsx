@@ -1,5 +1,5 @@
 import { View, Text, Pressable, StyleSheet, Switch } from 'react-native'
-import { ChevronRight } from 'lucide-react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { STEADY } from '@repo/ui'
 import type { ReactNode } from 'react'
 
@@ -35,7 +35,7 @@ export function SettingRow({ icon, iconColor, iconBg, title, sub, toggle, toggle
             trackColor={{ false: STEADY.border.light, true: STEADY.accent.base }}
             thumbColor="#fff"
           />
-        : <ChevronRight size={16} color={STEADY.ink.tertiary} />
+        : <Ionicons name="chevron-forward-outline" size={16} color={STEADY.ink.tertiary} />
       }
     </Pressable>
   )

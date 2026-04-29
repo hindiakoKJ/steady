@@ -14,8 +14,11 @@
     "db:studio": "cd packages/db && npx prisma studio"
   },
   "devDependencies": {
+    "expo": "~53.0.0",
     "turbo": "^2.3.3",
-    "typescript": "^5.7.2",
-    "expo": "~53.0.0"
+    "typescript": "^5.7.2"
+  },
+  "dependencies": {
+    "@expo/server": "^0.7.5"
   }
 }

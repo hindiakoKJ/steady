@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { View, Text, ScrollView, Pressable, StyleSheet, Alert, KeyboardAvoidingView, Platform } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
-import { ChevronLeft, ChevronRight, Check, User, Heart } from 'lucide-react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { STEADY } from '@repo/ui'
 import { Field } from '@/components/Field'
 import { authApi } from '@/lib/api'
@@ -55,7 +55,7 @@ export default function RegisterScreen() {
     <SafeAreaView style={s.root}>
       <View style={s.progressRow}>
         <Pressable style={s.backBtn} onPress={() => router.back()}>
-          <ChevronLeft size={18} color={STEADY.ink.onDarkSec} />
+          <Ionicons name="chevron-back-outline" size={18} color={STEADY.ink.onDarkSec} />
         </Pressable>
         <View style={s.progressTrack}>
           <View style={s.progressFill} />
@@ -93,14 +93,14 @@ export default function RegisterScreen() {
               style={[s.roleCard, role === 'patient' && s.roleCardActive]}
               onPress={() => setRole('patient')}
             >
-              <Heart size={20} color={role === 'patient' ? STEADY.accent.soft : STEADY.ink.onDarkTer} />
+              <Ionicons name="heart-outline" size={20} color={role === 'patient' ? STEADY.accent.soft : STEADY.ink.onDarkTer} />
               <Text style={role === 'patient' ? s.roleLabelActive : s.roleLabel}>I have epilepsy</Text>
             </Pressable>
             <Pressable
               style={[s.roleCard, role === 'caregiver' && s.roleCardActive]}
               onPress={() => setRole('caregiver')}
             >
-              <User size={20} color={role === 'caregiver' ? STEADY.accent.soft : STEADY.ink.onDarkTer} />
+              <Ionicons name="person-outline" size={20} color={role === 'caregiver' ? STEADY.accent.soft : STEADY.ink.onDarkTer} />
               <Text style={role === 'caregiver' ? s.roleLabelActive : s.roleLabel}>I'm a caregiver</Text>
             </Pressable>
           </View>
@@ -127,7 +127,7 @@ export default function RegisterScreen() {
 
           <Pressable style={s.consentRow} onPress={() => setAgreed(!agreed)}>
             <View style={[s.checkbox, agreed && s.checkboxChecked]}>
-              {agreed && <Check size={13} color="#fff" strokeWidth={3} />}
+              {agreed && <Ionicons name="checkmark-outline" size={13} color="#fff" />}
             </View>
             <Text style={s.consentText}>
               I agree to the{' '}
@@ -145,7 +145,7 @@ export default function RegisterScreen() {
           disabled={loading}
         >
           <Text style={s.continueBtnText}>{loading ? 'Creating account…' : 'Create account'}</Text>
-          {!loading && <ChevronRight size={18} color="#fff" />}
+          {!loading && <Ionicons name="chevron-forward-outline" size={18} color="#fff" />}
         </Pressable>
         <Pressable onPress={() => router.push('/auth/login')}>
           <Text style={s.signinLink}>

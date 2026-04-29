@@ -18,7 +18,7 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3001'
 const client = axios.create({ baseURL: API_URL })
 
 client.interceptors.request.use(async (config) => {
-  const token = await AsyncStorage.getItem('token')
+  const token = await AsyncStorage.getItem('@steady/token')
   if (token) config.headers.Authorization = `Bearer ${token}`
   return config
 })

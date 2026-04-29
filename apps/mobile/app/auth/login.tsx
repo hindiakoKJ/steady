@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { View, Text, ScrollView, Pressable, StyleSheet, Alert, KeyboardAvoidingView, Platform } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
-import { Phone } from 'lucide-react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { STEADY } from '@repo/ui'
 import { Field } from '@/components/Field'
 import { SteadyMark } from '@/components/SteadyMark'
@@ -87,7 +87,7 @@ export default function LoginScreen() {
 
           <Pressable style={s.emergencyCard} onPress={() => router.push('/bystander')}>
             <View style={s.emergencyIcon}>
-              <Phone size={16} color="#fff" />
+              <Ionicons name="call-outline" size={16} color="#fff" />
             </View>
             <View style={s.emergencyText}>
               <Text style={s.emergencyTitle}>Emergency without sign-in</Text>

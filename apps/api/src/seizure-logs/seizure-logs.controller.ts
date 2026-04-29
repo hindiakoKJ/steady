@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Patch, Param, Body, Query, UseGuards, Request } from '@nestjs/common'
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger'
+
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { SeizureLogsService } from './seizure-logs.service'
 import { CreateSeizureLogDto } from './dto/create-seizure-log.dto'

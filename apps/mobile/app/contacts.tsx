@@ -4,7 +4,7 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
-import { X, Phone, User, Plus } from 'lucide-react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { STEADY } from '@repo/ui'
 import { contactsApi } from '@/lib/api'
 import type { EmergencyContact } from '@repo/types'
@@ -82,7 +82,7 @@ export default function ContactsScreen() {
           <Text style={s.title}>Emergency Contacts</Text>
         </View>
         <Pressable style={s.closeBtn} onPress={() => router.back()}>
-          <X size={18} color={STEADY.ink.secondary} />
+          <Ionicons name="close-outline" size={18} color={STEADY.ink.secondary} />
         </Pressable>
       </View>
 
@@ -112,20 +112,20 @@ export default function ContactsScreen() {
             {contacts.map((c) => (
               <View key={c.id} style={s.contactCard}>
                 <View style={s.contactAvatar}>
-                  <User size={16} color={STEADY.accent.base} />
+                  <Ionicons name="person-outline" size={16} color={STEADY.accent.base} />
                 </View>
                 <View style={s.contactInfo}>
                   <Text style={s.contactName}>{c.nickname}</Text>
                   {c.phoneNumber
                     ? <View style={s.phoneRow}>
-                        <Phone size={11} color={STEADY.ink.secondary} />
+                        <Ionicons name="call-outline" size={11} color={STEADY.ink.secondary} />
                         <Text style={s.contactPhone}>{c.phoneNumber}</Text>
                       </View>
                     : <Text style={s.contactPhoneMissing}>Push only — no phone number</Text>
                   }
                 </View>
                 <Pressable style={s.deleteBtn} onPress={() => handleDelete(c)} hitSlop={8}>
-                  <X size={15} color={STEADY.emergency.base} />
+                  <Ionicons name="close-outline" size={15} color={STEADY.emergency.base} />
                 </Pressable>
               </View>
             ))}
@@ -169,7 +169,7 @@ export default function ContactsScreen() {
             {saving
               ? <ActivityIndicator color="#fff" size="small" />
               : <>
-                  <Plus size={16} color="#fff" />
+                  <Ionicons name="add-outline" size={16} color="#fff" />
                   <Text style={s.addBtnText}>Add contact</Text>
                 </>
             }

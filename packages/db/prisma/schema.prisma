@@ -65,12 +65,26 @@ model SeizureLog {
   startedAt        DateTime
   endedAt          DateTime?
   durationSeconds  Int?
+
+  // ── How the log was started ──────────────────────────────────────────────
+  triggeredBy      String?   // "AURA" | "BEACON" | "PASSIVE" | "MANUAL"
+  isFalseAlarm     Boolean   @default(false)
+
+  // ── Clinical details (entered after episode ends) ────────────────────────
+  seizureType      String?   // "tonic-clonic" | "absence" | "focal" | "myoclonic" | "unknown"
+  triggers         String[]  // ["missed_meds","stress","sleep","heat","illness","unknown"]
+  consciousnessLost Boolean?
+  injuryOccurred   Boolean?
+  postictalMinutes Int?      // How many minutes until fully recovered
+
+  // ── Environment at seizure time ──────────────────────────────────────────
   weatherTempC     Float?
   weatherCondition String?   // "Clear", "Rain", "Thunderstorm", etc.
   weatherHumidity  Int?
   latitude         Float?    // GPS at seizure time (for BEACON map link)
   longitude        Float?
   beaconFiredAt    DateTime? // When BEACON was activated during this event
+
   notes            String?
 
   patient   Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)

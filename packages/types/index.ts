@@ -38,6 +38,26 @@ export interface CreatePatientRequest {
 
 // ─── Seizure Log ─────────────────────────────────────────────────────────────
 
+export type SeizureTrigger =
+  | 'missed_meds'
+  | 'stress'
+  | 'sleep'
+  | 'heat'
+  | 'illness'
+  | 'flashing_lights'
+  | 'alcohol'
+  | 'menstrual'
+  | 'unknown'
+
+export type SeizureType =
+  | 'tonic-clonic'
+  | 'absence'
+  | 'focal'
+  | 'myoclonic'
+  | 'unknown'
+
+export type SeizureTriggerSource = 'AURA' | 'BEACON' | 'PASSIVE' | 'MANUAL'
+
 export interface SeizureLog {
   id: string
   patientId: string
@@ -45,12 +65,23 @@ export interface SeizureLog {
   startedAt: string
   endedAt?: string
   durationSeconds?: number
+
+  triggeredBy?: SeizureTriggerSource
+  isFalseAlarm: boolean
+
+  seizureType?: SeizureType
+  triggers: SeizureTrigger[]
+  consciousnessLost?: boolean
+  injuryOccurred?: boolean
+  postictalMinutes?: number
+
   weatherTempC?: number
   weatherCondition?: string
   weatherHumidity?: number
   latitude?: number
   longitude?: number
   beaconFiredAt?: string
+
   notes?: string
   createdAt: string
 }
@@ -58,6 +89,7 @@ export interface SeizureLog {
 export interface CreateSeizureLogRequest {
   patientId: string
   startedAt: string
+  triggeredBy?: SeizureTriggerSource
   weatherTempC?: number
   weatherCondition?: string
   weatherHumidity?: number
@@ -67,6 +99,12 @@ export interface CreateSeizureLogRequest {
 
 export interface EndSeizureLogRequest {
   endedAt: string
+  isFalseAlarm?: boolean
+  seizureType?: SeizureType
+  triggers?: SeizureTrigger[]
+  consciousnessLost?: boolean
+  injuryOccurred?: boolean
+  postictalMinutes?: number
   notes?: string
 }
 

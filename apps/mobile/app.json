@@ -5,12 +5,12 @@
     "scheme": "steady",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "dark",
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/images/icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#0f172a"
+      "backgroundColor": "#5B5BD6"
     },
     "ios": {
       "supportsTablet": false,
@@ -22,15 +22,21 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#0f172a"
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#5B5BD6"
       },
       "package": "com.steady.app",
+      "versionCode": 1,
+      "extractNativeLibs": true,
       "permissions": [
+        "INTERNET",
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
         "VIBRATE",
-        "SEND_SMS"
+        "SEND_SMS",
+        "POST_NOTIFICATIONS",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
       ]
     },
     "web": {
@@ -47,13 +53,15 @@
         }
       ],
       [
-        "expo-notifications",
+        "@sentry/react-native/expo",
         {
-          "icon": "./assets/notification-icon.png",
-          "color": "#10b981"
+          "url": "https://sentry.io",
+          "project": "steady",
+          "organization": "hindiakokj1"
         }
       ]
     ],
+    "newArchEnabled": false,
     "experiments": {
       "typedRoutes": true
     },
@@ -62,8 +70,9 @@
         "origin": false
       },
       "eas": {
-        "projectId": "474071af-a82b-4d86-8e8b-b0e2c080db77"
+        "projectId": "a7f4904c-6cac-4f6e-85fd-74263656632a"
       }
-    }
+    },
+    "owner": "hindiakokj2"
   }
 }

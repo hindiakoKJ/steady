@@ -1,101 +1,41 @@
-import { useEffect } from 'react'
-import { Stack, SplashScreen, useRouter } from 'expo-router'
-import { StatusBar } from 'expo-status-bar'
-import * as Notifications from 'expo-notifications'
-import { authStorage } from '@/lib/auth'
-import { registerForPushNotifications } from '@/lib/notifications'
+import { Component, type ReactNode } from 'react'
+import { View, Text } from 'react-native'
+import { Stack, SplashScreen } from 'expo-router'
 
-// Prevent the native splash from auto-hiding before we finish the auth check.
-SplashScreen.preventAutoHideAsync()
+// Keep native splash visible until auth check resolves in index.tsx
+SplashScreen.preventAutoHideAsync().catch(() => {})
 
-// Set up the notification handler here so it runs once, at the module level,
-// but AFTER expo-splash-screen has been initialized.
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-})
+// ─── Visible error boundary ──────────────────────────────────────────────────
+interface EBState { error: Error | null }
+class ErrorBoundary extends Component<{ children: ReactNode }, EBState> {
+  state: EBState = { error: null }
+  static getDerivedStateFromError(error: Error): EBState {
+    return { error }
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, backgroundColor: '#0f172a' }}>
+          <Text style={{ color: '#ef4444', fontSize: 16, fontWeight: '700', marginBottom: 12 }}>
+            ⚠️ App crashed
+          </Text>
+          <Text style={{ color: '#fca5a5', fontSize: 12, textAlign: 'center', lineHeight: 18 }}>
+            {String(this.state.error)}
+          </Text>
+          <Text style={{ color: '#64748b', fontSize: 11, marginTop: 16, textAlign: 'center' }}>
+            Screenshot this and share for debugging.
+          </Text>
+        </View>
+      )
+    }
+    return this.props.children
+  }
+}
 
 export default function RootLayout() {
-  const router = useRouter()
-
-  useEffect(() => {
-    // Run the auth check ONCE on mount.
-    // We deliberately do NOT include router or segments in the dependency
-    // array — we only want this to run once, not on every navigation event.
-    const bootstrap = async () => {
-      try {
-        const loggedIn = await authStorage.isLoggedIn()
-        if (loggedIn) {
-          // Already signed in — register push silently
-          registerForPushNotifications().catch(() => {})
-          router.replace('/(tabs)')
-        } else {
-          router.replace('/auth/login')
-        }
-      } catch {
-        // If AsyncStorage fails, default to login
-        router.replace('/auth/login')
-      } finally {
-        // Always hide the splash once we know where to go
-        SplashScreen.hideAsync().catch(() => {})
-      }
-    }
-    bootstrap()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  // Always render the Stack — expo-router needs the navigator in the tree
-  // from the very first render. The native splash screen covers the UI
-  // while the auth check above runs asynchronously.
   return (
-    <>
-      <StatusBar style="light" backgroundColor="#0f172a" />
-      <Stack
-        screenOptions={{
-          headerStyle: { backgroundColor: '#0f172a' },
-          headerTintColor: '#f8fafc',
-          headerTitleStyle: { fontWeight: '700' },
-          contentStyle: { backgroundColor: '#0f172a' },
-        }}
-      >
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="auth" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="bystander"
-          options={{
-            title: 'Bystander Mode',
-            presentation: 'fullScreenModal',
-            headerStyle: { backgroundColor: '#ffffff' },
-            headerTintColor: '#0f172a',
-          }}
-        />
-        <Stack.Screen
-          name="seizure-active"
-          options={{
-            title: '',
-            headerShown: false,
-            presentation: 'fullScreenModal',
-          }}
-        />
-        <Stack.Screen
-          name="patient-select"
-          options={{
-            title: 'Switch Patient',
-            presentation: 'modal',
-          }}
-        />
-        <Stack.Screen
-          name="contacts"
-          options={{
-            title: 'Emergency Contacts',
-            presentation: 'modal',
-            headerShown: false,
-          }}
-        />
-      </Stack>
-    </>
+    <ErrorBoundary>
+      <Stack screenOptions={{ headerShown: false }} />
+    </ErrorBoundary>
   )
 }

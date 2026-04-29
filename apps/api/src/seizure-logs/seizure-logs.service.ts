@@ -12,7 +12,6 @@ export class SeizureLogsService {
   ) {}
 
   async create(dto: CreateSeizureLogDto, householdId: string) {
-    // Verify the patient belongs to this household before creating
     const patient = await this.prisma.patient.findFirst({
       where: { id: dto.patientId, householdId },
     })
@@ -23,6 +22,7 @@ export class SeizureLogsService {
         patientId: dto.patientId,
         householdId,
         startedAt: new Date(dto.startedAt),
+        triggeredBy: dto.triggeredBy,
         weatherTempC: dto.weatherTempC,
         weatherCondition: dto.weatherCondition,
         weatherHumidity: dto.weatherHumidity,
@@ -46,6 +46,12 @@ export class SeizureLogsService {
       data: {
         endedAt,
         durationSeconds,
+        isFalseAlarm: dto.isFalseAlarm ?? false,
+        seizureType: dto.seizureType,
+        triggers: dto.triggers ?? [],
+        consciousnessLost: dto.consciousnessLost,
+        injuryOccurred: dto.injuryOccurred,
+        postictalMinutes: dto.postictalMinutes,
         notes: dto.notes,
       },
     })
@@ -67,16 +73,14 @@ export class SeizureLogsService {
       },
     })
 
-    // Fire push notifications to all household app users (non-blocking)
     this.notifications
       .sendBeaconPush(householdId, log.patient.nickname)
-      .catch(() => {/* push failures should never block the beacon response */})
+      .catch(() => {})
 
     return updated
   }
 
   async findAll(householdId: string, patientId?: string) {
-    // householdId is ALWAYS in the where clause — the HouseholdID isolation guarantee
     return this.prisma.seizureLog.findMany({
       where: {
         householdId,
@@ -88,4 +92,5 @@ export class SeizureLogsService {
       },
     })
   }
+
 }

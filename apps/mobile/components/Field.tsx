@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { View, Text, TextInput, Pressable, StyleSheet } from 'react-native'
-import { Eye, EyeOff } from 'lucide-react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { STEADY } from '@repo/ui'
 
 interface Props {
@@ -34,8 +34,8 @@ export function Field({ label, value, onChangeText, type = 'text', placeholder, 
         {isPassword && (
           <Pressable onPress={() => setShow(!show)} hitSlop={8}>
             {show
-              ? <EyeOff size={18} color={STEADY.ink.onDarkSec} />
-              : <Eye size={18} color={STEADY.ink.onDarkSec} />
+              ? <Ionicons name="eye-off-outline" size={18} color={STEADY.ink.onDarkSec} />
+              : <Ionicons name="eye-outline" size={18} color={STEADY.ink.onDarkSec} />
             }
           </Pressable>
         )}

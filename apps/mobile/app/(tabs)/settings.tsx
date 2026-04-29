@@ -2,17 +2,21 @@ import { useEffect, useState } from 'react'
 import { View, Text, ScrollView, Pressable, StyleSheet, Alert } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
-import { Phone, Shield, Bell, MapPin, Globe } from 'lucide-react-native'
+import { Ionicons } from '@expo/vector-icons'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { STEADY } from '@repo/ui'
 import { SettingRow, SettingsGroup } from '@/components/SettingsRow'
 import { contactsApi } from '@/lib/api'
 import { authStorage } from '@/lib/auth'
 import type { EmergencyContact } from '@repo/types'
 
+export const SMS_BEACON_KEY = '@steady/smsBeaconEnabled'
+
 export default function SettingsScreen() {
   const router = useRouter()
   const [contacts, setContacts] = useState<EmergencyContact[]>([])
   const [currentPatient, setCurrentPatient] = useState<{ id: string; nickname: string } | null>(null)
+  const [smsEnabled, setSmsEnabled] = useState(true)
 
   useEffect(() => {
     const load = async () => {
@@ -24,9 +28,16 @@ export default function SettingsScreen() {
       } catch {
         // Not yet connected to API — silently ignore
       }
+      const stored = await AsyncStorage.getItem(SMS_BEACON_KEY)
+      setSmsEnabled(stored === null ? true : stored === 'true')
     }
     load()
   }, [])
+
+  const handleSmsToggle = async (val: boolean) => {
+    setSmsEnabled(val)
+    await AsyncStorage.setItem(SMS_BEACON_KEY, String(val))
+  }
 
   const handleLogout = () => {
     Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
@@ -74,7 +85,7 @@ export default function SettingsScreen() {
         {/* Safety group */}
         <SettingsGroup title="Safety">
           <SettingRow
-            icon={<Phone size={16} color={STEADY.emergency.base} />}
+            icon={<Ionicons name="call-outline" size={16} color={STEADY.emergency.base} />}
             iconColor={STEADY.emergency.base}
             iconBg={STEADY.emergency.soft}
             title="Emergency contacts"
@@ -82,7 +93,19 @@ export default function SettingsScreen() {
             onPress={() => router.push('/contacts')}
           />
           <SettingRow
-            icon={<Shield size={16} color={STEADY.accent.base} />}
+            icon={<Ionicons name="chatbubble-outline" size={16} color={STEADY.warn.base} />}
+            iconColor={STEADY.warn.base}
+            iconBg={STEADY.warn.soft}
+            title="SMS alerts on BEACON"
+            sub={smsEnabled
+              ? 'Opens pre-filled SMS for contacts with phone numbers'
+              : 'Push notifications only (app users)'}
+            toggle
+            toggleValue={smsEnabled}
+            onToggle={handleSmsToggle}
+          />
+          <SettingRow
+            icon={<Ionicons name="shield-checkmark-outline" size={16} color={STEADY.accent.base} />}
             iconColor={STEADY.accent.base}
             iconBg={STEADY.accent.soft}
             title="Bystander mode card"
@@ -90,7 +113,7 @@ export default function SettingsScreen() {
             onPress={() => router.push('/bystander')}
           />
           <SettingRow
-            icon={<Bell size={16} color={STEADY.warn.base} />}
+            icon={<Ionicons name="notifications-outline" size={16} color={STEADY.warn.base} />}
             iconColor={STEADY.warn.base}
             iconBg={STEADY.warn.soft}
             title="Auto-alert at 5 minutes"
@@ -99,7 +122,7 @@ export default function SettingsScreen() {
             toggleValue={true}
           />
           <SettingRow
-            icon={<MapPin size={16} color={STEADY.accent.base} />}
+            icon={<Ionicons name="location-outline" size={16} color={STEADY.accent.base} />}
             iconColor={STEADY.accent.base}
             iconBg={STEADY.accent.soft}
             title="Share GPS during seizure"
@@ -113,7 +136,7 @@ export default function SettingsScreen() {
         {/* Language group */}
         <SettingsGroup title="Language">
           <SettingRow
-            icon={<Globe size={16} color={STEADY.ink.secondary} />}
+            icon={<Ionicons name="globe-outline" size={16} color={STEADY.ink.secondary} />}
             iconColor={STEADY.ink.secondary}
             iconBg={STEADY.bg.sunken}
             title="App language"
@@ -175,6 +198,6 @@ const s = StyleSheet.create({
   logoutBtn:          { borderWidth: 1, borderColor: STEADY.emergency.soft, borderRadius: STEADY.r.lg, paddingVertical: 14, alignItems: 'center', marginBottom: 18, backgroundColor: '#fff' },
   logoutText:         { color: STEADY.emergency.base, fontWeight: '600', fontSize: 15 },
   footer:             { alignItems: 'center', gap: 4, paddingTop: 4, paddingBottom: 8 },
-  footerApp:          { color: STEADY.ink.tertiary, fontWeight: '700', fontSize: 13 },
-  footerSub:          { color: STEADY.border.light, fontSize: 11 },
+  footerApp:          { color: STEADY.ink.secondary, fontWeight: '700', fontSize: 13 },
+  footerSub:          { color: STEADY.ink.tertiary, fontSize: 11 },
 })
