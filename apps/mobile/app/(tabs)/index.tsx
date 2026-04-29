@@ -98,8 +98,8 @@ export default function EmergencyHub() {
           ? parts.join(' · ')
           : `Alerting ${preview.contacts.length} contact${preview.contacts.length > 1 ? 's' : ''}…`,
       )
-    } catch {
-      Alert.alert('Error', 'Could not send BEACON. Please try again.')
+    } catch (e) {
+      Alert.alert('BEACON Error', (e as any)?.response?.data?.message || (e as any)?.message || 'Could not send BEACON')
     } finally {
       setBeaconLoading(false)
     }
@@ -167,8 +167,8 @@ export default function EmergencyHub() {
       })
       await AsyncStorage.setItem('@steady/activeSeizureLogId', log.id)
       router.push('/seizure-active')
-    } catch {
-      Alert.alert('Error', 'Could not log seizure. Please try again.')
+    } catch (e) {
+      Alert.alert('AURA Error', (e as any)?.response?.data?.message || (e as any)?.message || 'Could not log seizure')
     } finally {
       setAuraLoading(false)
     }
@@ -218,8 +218,8 @@ export default function EmergencyHub() {
         lon: location?.lon,
         activeLogId: activeId,
       })
-    } catch {
-      Alert.alert('Error', 'Could not prepare BEACON. Please try again.')
+    } catch (e) {
+      Alert.alert('BEACON Prep Error', (e as any)?.response?.data?.message || (e as any)?.message || 'Could not prepare BEACON')
       setBeaconLoading(false)
     }
   }, [currentPatient, startCountdown])
