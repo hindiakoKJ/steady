@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
+import { useFocusEffect } from 'expo-router'
 import { View, Text, FlatList, Pressable, StyleSheet, Alert, ActivityIndicator } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
@@ -90,20 +91,23 @@ export default function HistoryScreen() {
   const [patientNickname, setPatientNickname] = useState('Patient')
   const [patientId, setPatientId] = useState<string | null>(null)
 
-  useEffect(() => {
-    const load = async () => {
-      const patient = await authStorage.getCurrentPatient()
-      if (!patient?.id) { setLoading(false); return }
-      if (patient.nickname) setPatientNickname(patient.nickname)
-      setPatientId(patient.id)
-      seizureLogsApi
-        .list(patient.id)
-        .then(setLogs)
-        .catch(() => setLogs([]))
-        .finally(() => setLoading(false))
-    }
-    load()
-  }, [])
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true)
+      const load = async () => {
+        const patient = await authStorage.getCurrentPatient()
+        if (!patient?.id) { setLoading(false); return }
+        if (patient.nickname) setPatientNickname(patient.nickname)
+        setPatientId(patient.id)
+        seizureLogsApi
+          .list(patient.id)
+          .then(setLogs)
+          .catch(() => setLogs([]))
+          .finally(() => setLoading(false))
+      }
+      load()
+    }, [])
+  )
 
   const realLogs = logs.filter((l) => !l.isFalseAlarm)
   const falseAlarms = logs.filter((l) => l.isFalseAlarm)
