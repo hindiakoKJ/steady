@@ -1,5 +1,4 @@
 import axios from 'axios'
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import type {
   AuthResponse,
   RegisterRequest,
@@ -12,13 +11,14 @@ import type {
   EmergencyContact,
   CreateEmergencyContactRequest,
 } from '@repo/types'
+import { authStorage } from './auth'
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3001'
 
 const client = axios.create({ baseURL: API_URL })
 
 client.interceptors.request.use(async (config) => {
-  const token = await AsyncStorage.getItem('@steady/token')
+  const token = await authStorage.getToken()
   if (token) config.headers.Authorization = `Bearer ${token}`
   return config
 })
