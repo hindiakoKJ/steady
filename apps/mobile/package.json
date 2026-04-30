@@ -29,6 +29,7 @@
     "expo-sms": "~13.1.4",
     "expo-splash-screen": "~0.30.10",
     "expo-status-bar": "~2.2.3",
+    "expo-system-ui": "~5.0.11",
     "react": "19.0.0",
     "react-native": "0.79.6",
     "react-native-gesture-handler": "~2.24.0",
@@ -37,7 +38,10 @@
   },
   "expo": {
     "install": {
-      "exclude": ["@sentry/react-native", "@types/react"]
+      "exclude": [
+        "@sentry/react-native",
+        "@types/react"
+      ]
     }
   },
   "devDependencies": {
