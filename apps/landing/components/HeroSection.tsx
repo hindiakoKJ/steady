@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import type { Lang } from '@repo/types'
 
 const copy = {
@@ -40,9 +41,16 @@ export function HeroSection({ lang }: { lang: Lang }) {
 
   return (
     <section className="min-h-screen flex flex-col items-center justify-center bg-slate-900 px-6 pt-20 pb-16 text-center">
-      {/* Shield icon */}
-      <div className="text-7xl mb-6 select-none" role="img" aria-label="shield">
-        🛡️
+      {/* Steady logo */}
+      <div className="mb-6">
+        <Image
+          src="/steady-icon.png"
+          alt="Steady app logo"
+          width={96}
+          height={96}
+          className="rounded-2xl shadow-lg shadow-black/40"
+          priority
+        />
       </div>
 
       {/* Founder tagline */}
