@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
+import { useFocusEffect } from 'expo-router'
 import {
   View, Text, StyleSheet, Pressable, Alert, Animated, Easing,
   Modal,
@@ -63,15 +64,17 @@ export default function EmergencyHub() {
     ).start()
   }, [haloScale])
 
-  useEffect(() => {
-    const load = async () => {
-      const stored = await authStorage.getCurrentPatient()
-      if (stored) {
-        setCurrentPatient({ id: stored.id, nickname: stored.nickname, householdId: '', createdAt: '' })
+  useFocusEffect(
+    useCallback(() => {
+      const load = async () => {
+        const stored = await authStorage.getCurrentPatient()
+        if (stored) {
+          setCurrentPatient({ id: stored.id, nickname: stored.nickname, householdId: '', createdAt: '' })
+        }
       }
-    }
-    load()
-  }, [])
+      load()
+    }, [])
+  )
 
   // ─── Actual fire (called after countdown) ──────────────────────────────────
   const fireSmsAndBeacon = useCallback(async (preview: SmsPreview) => {
