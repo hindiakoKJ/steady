@@ -31,7 +31,9 @@
         "EXPO_ROUTER_APP_ROOT": "app",
         "EXPO_ROUTER_IMPORT_MODE": "lazy",
         "EXPO_PUBLIC_API_URL": "https://steady-production-6eab.up.railway.app",
-        "EXPO_PUBLIC_OPENWEATHER_KEY": "SET_VIA_EAS_SECRET"
+        "EXPO_PUBLIC_OPENWEATHER_KEY": "SET_VIA_EAS_SECRET",
+        "EXPO_PUBLIC_SENTRY_DSN": "https://eb445eea371b31a6d018eabe7eb2f2a7@o4511297088978944.ingest.de.sentry.io/4511297096712272",
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       }
     }
   },
