@@ -27,7 +27,6 @@
       },
       "package": "ph.hnscorpph.steady",
       "versionCode": 1,
-      "extractNativeLibs": true,
       "permissions": [
         "INTERNET",
         "ACCESS_FINE_LOCATION",
