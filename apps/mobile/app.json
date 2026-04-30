@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.steady.app",
+      "bundleIdentifier": "ph.hnscorpph.steady",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Steady needs your location to log weather conditions during a seizure and to send your location to family contacts.",
         "NSMotionUsageDescription": "Steady uses motion sensors to detect potential seizure activity while the app is open."
@@ -59,7 +59,8 @@
           "project": "steady",
           "organization": "hindiakokj1"
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "newArchEnabled": false,
     "experiments": {

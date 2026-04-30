@@ -71,6 +71,7 @@ function EventCard({ log }: { log: SeizureLog }) {
         <Text style={ev.meta}>
           {time}
           {log.weatherTempC != null ? ` · ${log.weatherTempC}°C ${log.weatherCondition ?? ''}` : ''}
+          {log.postictalMinutes != null ? ` · ${log.postictalMinutes}min recovery` : ''}
           {log.injuryOccurred ? ' · ⚠️ Injury' : ''}
         </Text>
         {(log.triggers ?? []).length > 0 && (

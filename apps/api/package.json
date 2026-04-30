@@ -16,6 +16,7 @@
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/swagger": "^11.4.1",
+    "@nestjs/throttler": "^6.5.0",
     "@repo/db": "*",
     "@repo/types": "*",
     "bcryptjs": "^3.0.3",

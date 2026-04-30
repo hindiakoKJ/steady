@@ -10,6 +10,12 @@ export const metadata: Metadata = {
     title: 'Steady',
     description: 'Free epilepsy safety app. Built by a dad. For every family.',
     type: 'website',
+    url: 'https://steady.hnscorpph.com',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Steady — Free Epilepsy Safety App',
+    description: 'Privacy-first seizure tracker. Built by a dad. Always free.',
   },
 }
 

@@ -1,24 +1,30 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import * as SecureStore from 'expo-secure-store'
 
+// JWT stored in the device secure keystore — encrypted at rest on Android/iOS
+const SECURE_KEY = 'steady_token'
+
+// Non-sensitive session metadata stays in AsyncStorage
 const KEYS = {
-  TOKEN: '@steady/token',
-  HOUSEHOLD_ID: '@steady/householdId',
-  PATIENT_ID: '@steady/currentPatientId',
-  PATIENT_NICKNAME: '@steady/currentPatientNickname',
+  HOUSEHOLD_ID:      '@steady/householdId',
+  PATIENT_ID:        '@steady/currentPatientId',
+  PATIENT_NICKNAME:  '@steady/currentPatientNickname',
 } as const
 
 export const authStorage = {
   async saveSession(token: string, householdId: string, patientId: string, patientNickname: string) {
-    await AsyncStorage.multiSet([
-      [KEYS.TOKEN, token],
-      [KEYS.HOUSEHOLD_ID, householdId],
-      [KEYS.PATIENT_ID, patientId],
-      [KEYS.PATIENT_NICKNAME, patientNickname],
+    await Promise.all([
+      SecureStore.setItemAsync(SECURE_KEY, token),
+      AsyncStorage.multiSet([
+        [KEYS.HOUSEHOLD_ID,     householdId],
+        [KEYS.PATIENT_ID,       patientId],
+        [KEYS.PATIENT_NICKNAME, patientNickname],
+      ]),
     ])
   },
 
   async getToken(): Promise<string | null> {
-    return AsyncStorage.getItem(KEYS.TOKEN)
+    return SecureStore.getItemAsync(SECURE_KEY)
   },
 
   async getHouseholdId(): Promise<string | null> {
@@ -33,17 +39,20 @@ export const authStorage = {
 
   async setCurrentPatient(id: string, nickname: string) {
     await AsyncStorage.multiSet([
-      [KEYS.PATIENT_ID, id],
+      [KEYS.PATIENT_ID,       id],
       [KEYS.PATIENT_NICKNAME, nickname],
     ])
   },
 
   async clearSession() {
-    await AsyncStorage.multiRemove(Object.values(KEYS))
+    await Promise.all([
+      SecureStore.deleteItemAsync(SECURE_KEY),
+      AsyncStorage.multiRemove(Object.values(KEYS)),
+    ])
   },
 
   async isLoggedIn(): Promise<boolean> {
-    const token = await AsyncStorage.getItem(KEYS.TOKEN)
+    const token = await SecureStore.getItemAsync(SECURE_KEY)
     return token !== null
   },
 }

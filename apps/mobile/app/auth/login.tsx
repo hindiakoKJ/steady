@@ -52,7 +52,7 @@ export default function LoginScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={s.header}>
-            <SteadyMark size={64} color={STEADY.accent.base} />
+            <SteadyMark size={64} />
             <Text style={s.title}>Welcome back</Text>
             <Text style={s.subtitle}>Sign in to access your seizure log and keep your family safe.</Text>
           </View>

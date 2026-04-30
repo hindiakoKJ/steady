@@ -16,6 +16,8 @@ import type { Patient, EmergencyContact } from '@repo/types'
 import * as ExpoSms from 'expo-sms'
 import { SMS_BEACON_KEY } from '@/app/(tabs)/settings'
 
+const MONITOR_DISCLAIMER_KEY = '@steady/monitorDisclaimerSeen'
+
 // ─── SMS Preview State ────────────────────────────────────────────────────────
 interface SmsPreview {
   contacts: EmergencyContact[]
@@ -33,7 +35,10 @@ export default function EmergencyHub() {
 
   // SMS countdown modal state
   const [smsPreview, setSmsPreview] = useState<SmsPreview | null>(null)
-  const [countdown, setCountdown] = useState(2)
+  const [countdown, setCountdown] = useState(5)
+
+  // Passive monitor disclaimer modal
+  const [monitorDisclaimerVisible, setMonitorDisclaimerVisible] = useState(false)
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const cancelledRef = useRef(false)
 
@@ -108,7 +113,7 @@ export default function EmergencyHub() {
   // ─── Countdown Logic ────────────────────────────────────────────────────────
   const startCountdown = useCallback((preview: SmsPreview) => {
     cancelledRef.current = false
-    setCountdown(2)
+    setCountdown(5)
     setSmsPreview(preview)
 
     countdownRef.current = setInterval(() => {
@@ -119,7 +124,7 @@ export default function EmergencyHub() {
             fireSmsAndBeacon(preview)
           }
           setSmsPreview(null)
-          return 2
+          return 5
         }
         return prev - 1
       })
@@ -130,7 +135,7 @@ export default function EmergencyHub() {
     cancelledRef.current = true
     if (countdownRef.current) clearInterval(countdownRef.current)
     setSmsPreview(null)
-    setCountdown(2)
+    setCountdown(5)
     setBeaconLoading(false)
   }, [])
 
@@ -146,6 +151,20 @@ export default function EmergencyHub() {
   }, [])
 
   const accel = useAccelerometer(onPassiveSeizureDetected)
+
+  // Show one-time disclaimer before starting passive monitor for the first time
+  const handleMonitorToggle = useCallback(async () => {
+    if (accel.isMonitoring) {
+      accel.stopMonitoring()
+      return
+    }
+    const seen = await AsyncStorage.getItem(MONITOR_DISCLAIMER_KEY)
+    if (seen === 'true') {
+      accel.startMonitoring()
+    } else {
+      setMonitorDisclaimerVisible(true)
+    }
+  }, [accel])
 
   const handleAura = useCallback(async () => {
     if (!currentPatient?.id) {
@@ -184,11 +203,12 @@ export default function EmergencyHub() {
         return
       }
 
-      // Get GPS directly — don't depend on weather for location
-      const [location, existingId] = await Promise.all([
-        getCurrentLocation(),
+      // Fetch weather + GPS together. Fall back to GPS-only if offline.
+      const [weather, existingId] = await Promise.all([
+        fetchCurrentWeather(),
         AsyncStorage.getItem('@steady/activeSeizureLogId'),
       ])
+      const location = weather ? { lat: weather.lat, lon: weather.lon } : await getCurrentLocation()
 
       // BEACON always creates a seizure log if one isn't already running
       let activeId = existingId
@@ -199,6 +219,9 @@ export default function EmergencyHub() {
           triggeredBy: 'BEACON',
           latitude: location?.lat,
           longitude: location?.lon,
+          weatherTempC: weather?.tempC,
+          weatherCondition: weather?.condition,
+          weatherHumidity: weather?.humidity,
         })
         activeId = log.id
         await AsyncStorage.setItem('@steady/activeSeizureLogId', log.id)
@@ -230,6 +253,47 @@ export default function EmergencyHub() {
 
   return (
     <SafeAreaView style={s.root}>
+      {/* ── Passive Monitor Disclaimer Modal ── */}
+      <Modal
+        visible={monitorDisclaimerVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setMonitorDisclaimerVisible(false)}
+      >
+        <View style={s.modalOverlay}>
+          <View style={s.modalCard}>
+            <Text style={s.modalEyebrow}>PASSIVE MONITOR</Text>
+            <Text style={{ fontSize: 32, marginVertical: 4 }}>⚠️</Text>
+            <Text style={[s.modalMsgLabel, { textAlign: 'center', marginBottom: 10 }]}>
+              NOT A MEDICAL DEVICE
+            </Text>
+            <Text style={[s.modalMsgText, { textAlign: 'center', lineHeight: 22 }]}>
+              The accelerometer detects rhythmic shaking as a reminder only. It cannot diagnose seizures and may miss episodes or trigger false alerts.{'\n\n'}Always follow the advice of your neurologist.
+            </Text>
+            <Pressable
+              style={[s.modalCancelBtn, { backgroundColor: STEADY.accent.softDark, borderColor: STEADY.accent.deep, marginTop: 12 }]}
+              accessibilityLabel="I understand, turn on passive monitor"
+              accessibilityRole="button"
+              onPress={async () => {
+                await AsyncStorage.setItem(MONITOR_DISCLAIMER_KEY, 'true')
+                setMonitorDisclaimerVisible(false)
+                accel.startMonitoring()
+              }}
+            >
+              <Text style={[s.modalCancelText, { color: STEADY.accent.base }]}>I understand — turn on</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setMonitorDisclaimerVisible(false)}
+              style={{ paddingVertical: 12 }}
+              accessibilityLabel="Cancel"
+              accessibilityRole="button"
+            >
+              <Text style={{ fontSize: 13, color: STEADY.ink.onDarkSec }}>Cancel</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
       {/* ── SMS Countdown Modal ── */}
       <Modal
         visible={smsPreview != null}
@@ -320,6 +384,9 @@ export default function EmergencyHub() {
             style={[s.heroButton, auraLoading && s.heroButtonLoading]}
             onPress={handleAura}
             disabled={auraLoading}
+            accessibilityLabel="Start seizure log"
+            accessibilityHint="Logs GPS, weather, and start time automatically"
+            accessibilityRole="button"
           >
             <Text style={s.heroEyebrow}>I FEEL ONE COMING</Text>
             <Text style={s.heroLabel}>{auraLoading ? 'Logging…' : 'Hold to start'}</Text>
@@ -342,6 +409,9 @@ export default function EmergencyHub() {
           style={[s.actionCard, s.actionCardBeacon, beaconLoading && s.actionCardDisabled]}
           onPress={handleBeacon}
           disabled={beaconLoading}
+          accessibilityLabel="Send BEACON alert"
+          accessibilityHint="Sends SMS and push notifications to all emergency contacts"
+          accessibilityRole="button"
         >
           <Text style={s.actionCardEyebrow}>ALERT</Text>
           <Text style={s.actionCardTitle}>{beaconLoading ? 'Preparing…' : 'BEACON'}</Text>
@@ -351,7 +421,10 @@ export default function EmergencyHub() {
         {/* Passive monitor toggle */}
         <Pressable
           style={[s.actionCard, accel.isMonitoring && s.actionCardMonitorActive]}
-          onPress={accel.isMonitoring ? accel.stopMonitoring : accel.startMonitoring}
+          onPress={handleMonitorToggle}
+          accessibilityLabel={accel.isMonitoring ? 'Turn off passive monitor' : 'Turn on passive monitor'}
+          accessibilityHint="Uses accelerometer to detect rhythmic shaking"
+          accessibilityRole="button"
         >
           <Text style={s.actionCardEyebrow}>AUTO-DETECT</Text>
           <Text style={s.actionCardTitle}>{accel.isMonitoring ? 'Monitor ON' : 'Monitor OFF'}</Text>
@@ -360,7 +433,13 @@ export default function EmergencyHub() {
       </View>
 
       {/* Bystander mode */}
-      <Pressable style={s.bystanderBtn} onPress={() => router.push('/bystander')}>
+      <Pressable
+        style={s.bystanderBtn}
+        onPress={() => router.push('/bystander')}
+        accessibilityLabel="Open Bystander Mode"
+        accessibilityHint="First aid guide, no sign-in needed"
+        accessibilityRole="button"
+      >
         <Text style={s.bystanderLabel}>👥 Bystander Mode</Text>
         <Text style={s.bystanderSub}>First-aid guide — no sign-in needed</Text>
       </Pressable>
@@ -376,7 +455,7 @@ const s = StyleSheet.create({
   headerText:           { flex: 1 },
   greeting:             { fontSize: 12, color: STEADY.ink.onDarkSec },
   greetingName:         { fontSize: 16, fontWeight: '600', color: STEADY.ink.onDark },
-  iconBtn:              { width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(255,255,255,0.06)', alignItems: 'center', justifyContent: 'center' },
+  iconBtn:              { width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(255,255,255,0.06)', alignItems: 'center', justifyContent: 'center' },
   statusPill:           {
     marginHorizontal: 20, marginTop: 14,
     paddingHorizontal: 14, paddingVertical: 10,

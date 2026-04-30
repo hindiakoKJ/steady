@@ -95,6 +95,12 @@ export async function exportNeurologistPDF(
   const injuryCount = logs.filter((l) => l.injuryOccurred).length
   const consciousnessLostCount = logs.filter((l) => l.consciousnessLost).length
 
+  // Postictal recovery stats
+  const postictalLogs = logs.filter((l) => l.postictalMinutes != null)
+  const avgPostictal = postictalLogs.length > 0
+    ? Math.round(postictalLogs.reduce((s, l) => s + (l.postictalMinutes ?? 0), 0) / postictalLogs.length)
+    : null
+
   const now = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
 
   const html = `<!DOCTYPE html>
@@ -165,6 +171,7 @@ export async function exportNeurologistPDF(
     ${typesSummary ? `<div class="clinical-row"><strong>Seizure types:</strong> ${typesSummary}</div>` : ''}
     ${topTriggers ? `<div class="clinical-row"><strong>Common triggers:</strong> ${topTriggers}</div>` : ''}
     ${consciousnessLostCount > 0 ? `<div class="clinical-row"><strong>Loss of consciousness:</strong> ${consciousnessLostCount} of ${total} episodes</div>` : ''}
+    ${avgPostictal != null ? `<div class="clinical-row"><strong>Avg postictal recovery:</strong> ${avgPostictal} min (recorded in ${postictalLogs.length} of ${total} episode${total !== 1 ? 's' : ''})</div>` : ''}
     ${injuryCount > 0 ? `<div class="clinical-row injury-flag"><strong>⚠ Injuries reported:</strong> ${injuryCount} episode${injuryCount !== 1 ? 's' : ''}</div>` : ''}
   </div>` : ''}
 
@@ -183,6 +190,7 @@ export async function exportNeurologistPDF(
         <th>Duration</th>
         <th>Triggers</th>
         <th>Consciousness</th>
+        <th>Recovery</th>
         <th>Injury</th>
         <th>Weather</th>
         <th>Notes</th>
@@ -203,6 +211,7 @@ export async function exportNeurologistPDF(
           <td class="${cls}">${formatDuration(l.durationSeconds)}</td>
           <td>${formatTriggers(l.triggers ?? [])}</td>
           <td>${l.consciousnessLost == null ? '—' : l.consciousnessLost ? 'Yes' : 'No'}</td>
+          <td>${l.postictalMinutes != null ? `${l.postictalMinutes} min` : '—'}</td>
           <td>${l.injuryOccurred == null ? '—' : l.injuryOccurred ? '<span class="injury-flag">Yes</span>' : 'No'}</td>
           <td>${weather}</td>
           <td>${l.notes ?? '—'}</td>

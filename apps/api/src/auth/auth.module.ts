@@ -9,8 +9,8 @@ import { JwtStrategy } from './jwt.strategy'
   imports: [
     PassportModule,
     JwtModule.register({
-      secret: process.env.JWT_SECRET ?? 'fallback-dev-secret',
-      signOptions: { expiresIn: '30d' },
+      secret: process.env.JWT_SECRET,
+      // No expiresIn — users stay permanently signed in (app holds no sensitive PII)
     }),
   ],
   controllers: [AuthController],

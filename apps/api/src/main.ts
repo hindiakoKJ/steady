@@ -4,10 +4,19 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 import { AppModule } from './app.module'
 
 async function bootstrap() {
+  // Refuse to start if JWT_SECRET is missing — health data must be protected
+  if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET environment variable is not set. Refusing to start.')
+  }
+
   const app = await NestFactory.create(AppModule)
 
   app.enableCors({
-    origin: ['http://localhost:3000', 'https://steady.vercel.app'],
+    origin: [
+      'http://localhost:3000',
+      'https://steady.hnscorpph.com',
+      'https://steady.vercel.app',
+    ],
     credentials: true,
   })
 
