@@ -26,6 +26,8 @@ interface SmsPreview {
   lat: number | undefined
   lon: number | undefined
   activeLogId: string | null
+  startedAt?: string   // set when BEACON creates a new log (not an existing seizure)
+  isNewLog?: boolean   // when true, navigate to seizure-active after firing
 }
 
 export default function EmergencyHub() {
@@ -106,12 +108,18 @@ export default function EmergencyHub() {
           ? parts.join(' · ')
           : `Alerting ${preview.contacts.length} contact${preview.contacts.length > 1 ? 's' : ''}…`,
       )
+
+      // If BEACON created a NEW log (no seizure was active), go to seizure-active
+      // so the caregiver can track duration and end it properly
+      if (preview.isNewLog && preview.startedAt) {
+        router.push({ pathname: '/seizure-active', params: { startedAt: preview.startedAt } })
+      }
     } catch (e) {
       Alert.alert('BEACON Error', (e as any)?.response?.data?.message || (e as any)?.message || 'Could not send BEACON')
     } finally {
       setBeaconLoading(false)
     }
-  }, [])
+  }, [router])
 
   // ─── Countdown Logic ────────────────────────────────────────────────────────
   const startCountdown = useCallback((preview: SmsPreview) => {
@@ -219,10 +227,13 @@ export default function EmergencyHub() {
 
       // BEACON always creates a seizure log if one isn't already running
       let activeId = existingId
+      let beaconStartedAt: string | undefined
+      let isNewLog = false
       if (!activeId && currentPatient?.id) {
+        beaconStartedAt = new Date().toISOString()
         const log = await seizureLogsApi.start({
           patientId: currentPatient.id,
-          startedAt: new Date().toISOString(),
+          startedAt: beaconStartedAt,
           triggeredBy: 'BEACON',
           latitude: location?.lat,
           longitude: location?.lon,
@@ -231,6 +242,7 @@ export default function EmergencyHub() {
           weatherHumidity: weather?.humidity,
         })
         activeId = log.id
+        isNewLog = true
         await AsyncStorage.setItem('@steady/activeSeizureLogId', log.id)
       }
 
@@ -240,13 +252,15 @@ export default function EmergencyHub() {
       const nickname = currentPatient?.nickname ?? 'Your contact'
       const message = `STEADY ALERT: ${nickname} may be having a seizure.${locationText}`
 
-      // Show 2-second preview then auto-send
+      // Show countdown then auto-send; navigate to seizure-active if new log
       startCountdown({
         contacts,
         message,
         lat: location?.lat,
         lon: location?.lon,
         activeLogId: activeId,
+        startedAt: beaconStartedAt,
+        isNewLog,
       })
     } catch (e) {
       Alert.alert('BEACON Prep Error', (e as any)?.response?.data?.message || (e as any)?.message || 'Could not prepare BEACON')

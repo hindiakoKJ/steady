@@ -11,13 +11,17 @@ import { contactsApi } from '@/lib/api'
 import { authStorage } from '@/lib/auth'
 import type { EmergencyContact } from '@repo/types'
 
-export const SMS_BEACON_KEY = '@steady/smsBeaconEnabled'
+export const SMS_BEACON_KEY   = '@steady/smsBeaconEnabled'
+export const AUTO_ALERT_KEY   = '@steady/autoAlert5min'
+export const SHARE_GPS_KEY    = '@steady/shareGpsDuringSeizure'
 
 export default function SettingsScreen() {
   const router = useRouter()
   const [contacts, setContacts] = useState<EmergencyContact[]>([])
   const [currentPatient, setCurrentPatient] = useState<{ id: string; nickname: string } | null>(null)
   const [smsEnabled, setSmsEnabled] = useState(true)
+  const [autoAlert, setAutoAlert] = useState(true)
+  const [shareGps, setShareGps] = useState(true)
 
   useFocusEffect(
     useCallback(() => {
@@ -32,6 +36,10 @@ export default function SettingsScreen() {
         }
         const stored = await AsyncStorage.getItem(SMS_BEACON_KEY)
         setSmsEnabled(stored === null ? true : stored === 'true')
+        const autoAlertStored = await AsyncStorage.getItem(AUTO_ALERT_KEY)
+        setAutoAlert(autoAlertStored === null ? true : autoAlertStored === 'true')
+        const shareGpsStored = await AsyncStorage.getItem(SHARE_GPS_KEY)
+        setShareGps(shareGpsStored === null ? true : shareGpsStored === 'true')
       }
       load()
     }, [])
@@ -40,6 +48,16 @@ export default function SettingsScreen() {
   const handleSmsToggle = async (val: boolean) => {
     setSmsEnabled(val)
     await AsyncStorage.setItem(SMS_BEACON_KEY, String(val))
+  }
+
+  const handleAutoAlertToggle = async (val: boolean) => {
+    setAutoAlert(val)
+    await AsyncStorage.setItem(AUTO_ALERT_KEY, String(val))
+  }
+
+  const handleShareGpsToggle = async (val: boolean) => {
+    setShareGps(val)
+    await AsyncStorage.setItem(SHARE_GPS_KEY, String(val))
   }
 
   const handleLogout = () => {
@@ -120,18 +138,20 @@ export default function SettingsScreen() {
             iconColor={STEADY.warn.base}
             iconBg={STEADY.warn.soft}
             title="Auto-alert at 5 minutes"
-            sub="Status epilepticus threshold"
+            sub={autoAlert ? 'BEACON fires automatically at status epilepticus threshold' : 'Manual BEACON only'}
             toggle
-            toggleValue={true}
+            toggleValue={autoAlert}
+            onToggle={handleAutoAlertToggle}
           />
           <SettingRow
             icon={<Ionicons name="location-outline" size={16} color={STEADY.accent.base} />}
             iconColor={STEADY.accent.base}
             iconBg={STEADY.accent.soft}
             title="Share GPS during seizure"
-            sub="With emergency contacts only"
+            sub={shareGps ? 'Location included in BEACON alert' : 'Location omitted from alerts'}
             toggle
-            toggleValue={true}
+            toggleValue={shareGps}
+            onToggle={handleShareGpsToggle}
             last
           />
         </SettingsGroup>

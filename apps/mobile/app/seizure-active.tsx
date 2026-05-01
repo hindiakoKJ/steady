@@ -5,8 +5,11 @@ import { useRouter, useLocalSearchParams } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { STEADY } from '@repo/ui'
-import { seizureLogsApi } from '@/lib/api'
-import type { SeizureType, SeizureTrigger, WeatherData } from '@repo/types'
+import { seizureLogsApi, contactsApi } from '@/lib/api'
+import { authStorage } from '@/lib/auth'
+import * as ExpoSms from 'expo-sms'
+import { SMS_BEACON_KEY, AUTO_ALERT_KEY, SHARE_GPS_KEY } from '@/app/(tabs)/settings'
+import type { SeizureType, SeizureTrigger, WeatherData, EmergencyContact } from '@repo/types'
 
 const RING_SIZE = 280
 const FALSE_ALARM_THRESHOLD = 5  // seconds
@@ -66,12 +69,36 @@ export default function SeizureActive() {
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
 
+  // Contacts loaded on mount — shown in status strip + used for auto-alert SMS
+  const [contacts, setContacts] = useState<EmergencyContact[]>([])
+
+  // Settings loaded as refs so they're accessible inside callbacks without dep churn
+  const autoAlertEnabledRef  = useRef(true)
+  const shareGpsEnabledRef   = useRef(true)
+  const autoAlertFiredRef    = useRef(false)
+
   // Cache the log id when we enter (so End works even if storage is cleared)
   const logIdRef = useRef<string | null>(null)
   useEffect(() => {
-    AsyncStorage.getItem('@steady/activeSeizureLogId').then((id) => {
+    const init = async () => {
+      // Log ID
+      const id = await AsyncStorage.getItem('@steady/activeSeizureLogId')
       logIdRef.current = id
-    })
+
+      // Emergency contacts for status strip + auto-alert SMS
+      try {
+        const list = await contactsApi.list()
+        setContacts(list)
+      } catch { /* no contacts — silent */ }
+
+      // Settings
+      const autoStored = await AsyncStorage.getItem(AUTO_ALERT_KEY)
+      autoAlertEnabledRef.current = autoStored === null ? true : autoStored === 'true'
+      const gpsStored = await AsyncStorage.getItem(SHARE_GPS_KEY)
+      shareGpsEnabledRef.current = gpsStored === null ? true : gpsStored === 'true'
+    }
+    init()
+
     // Poll for background weather (set by AURA button) — check every 2s for up to 30s
     let attempts = 0
     const weatherPoll = setInterval(async () => {
@@ -93,16 +120,42 @@ export default function SeizureActive() {
     return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
   }, [])
 
-  // Advance first-aid step every 30 seconds (skip step 0 — video reminder covers it)
+  // Advance first-aid step every 30 seconds + auto-alert at 5 min
   useEffect(() => {
     if (seconds > 0 && seconds % 30 === 0 && aidStep < AID_STEPS.length - 1) {
       setAidStep((s) => s + 1)
     }
-  }, [seconds])
+    // Auto-BEACON at exactly 5 minutes if setting is on
+    if (seconds === 300 && autoAlertEnabledRef.current && !autoAlertFiredRef.current) {
+      autoAlertFiredRef.current = true
+      fireAutoAlert()
+    }
+  }, [seconds, fireAutoAlert])
 
   const mm = String(Math.floor(seconds / 60)).padStart(2, '0')
   const ss = String(seconds % 60).padStart(2, '0')
   const past5 = seconds >= 300
+
+  // ── Auto-alert at 5 minutes ───────────────────────────────────────────────
+  const fireAutoAlert = useCallback(async () => {
+    const id = logIdRef.current
+    if (!id) return
+    const w = shareGpsEnabledRef.current ? weatherRef.current : null
+    try {
+      await seizureLogsApi.fireBeacon(id, w?.lat ?? undefined, w?.lon ?? undefined)
+      // Send SMS if enabled and contacts have phone numbers
+      const smsStored = await AsyncStorage.getItem(SMS_BEACON_KEY)
+      const smsOn = smsStored === null ? true : smsStored === 'true'
+      const smsAvailable = await ExpoSms.isAvailableAsync()
+      const phoneContacts = contacts.filter((c) => c.phoneNumber)
+      if (smsOn && smsAvailable && phoneContacts.length > 0) {
+        const patient = await authStorage.getCurrentPatient()
+        const locationText = w ? ` Location: https://maps.google.com/?q=${w.lat},${w.lon}` : ''
+        const message = `STEADY ALERT: ${patient?.nickname ?? 'Your contact'} is having a seizure (5+ minutes — status epilepticus risk).${locationText}`
+        await ExpoSms.sendSMSAsync(phoneContacts.map((c) => c.phoneNumber!), message)
+      }
+    } catch { /* silent — don't interrupt the caregiver */ }
+  }, [contacts])
 
   // ── End seizure — check false alarm threshold ────────────────────────────
   const handleEnd = useCallback(() => {
@@ -323,7 +376,11 @@ export default function SeizureActive() {
         <View style={s.liveDot} />
         <Text style={s.liveLabel}>SEIZURE TRACKING · LIVE</Text>
         <View style={{ flex: 1 }} />
-        <Text style={s.notifiedLabel}>Contacts notified</Text>
+        {contacts.length > 0 && (
+          <Text style={s.notifiedLabel} numberOfLines={1}>
+            {contacts.map((c) => c.nickname).join(', ')} notified
+          </Text>
+        )}
       </View>
 
       {/* ── Video reminder banner ─────────────────────────────────────────── */}
