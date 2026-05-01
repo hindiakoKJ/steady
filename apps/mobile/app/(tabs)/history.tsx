@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useFocusEffect } from 'expo-router'
-import { View, Text, FlatList, Pressable, StyleSheet, Alert, ActivityIndicator } from 'react-native'
+import { View, Text, FlatList, Pressable, StyleSheet, Alert, ActivityIndicator, RefreshControl, ScrollView } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { STEADY } from '@repo/ui'
@@ -87,26 +87,28 @@ function EventCard({ log }: { log: SeizureLog }) {
 export default function HistoryScreen() {
   const [logs, setLogs] = useState<SeizureLog[]>([])
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [exporting, setExporting] = useState(false)
+  const [tableView, setTableView] = useState(false)
   const [patientNickname, setPatientNickname] = useState('Patient')
   const [patientId, setPatientId] = useState<string | null>(null)
 
+  const loadLogs = useCallback(async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true)
+    else setLoading(true)
+    const patient = await authStorage.getCurrentPatient()
+    if (!patient?.id) { setLoading(false); setRefreshing(false); return }
+    if (patient.nickname) setPatientNickname(patient.nickname)
+    setPatientId(patient.id)
+    seizureLogsApi
+      .list(patient.id)
+      .then(setLogs)
+      .catch(() => setLogs([]))
+      .finally(() => { setLoading(false); setRefreshing(false) })
+  }, [])
+
   useFocusEffect(
-    useCallback(() => {
-      setLoading(true)
-      const load = async () => {
-        const patient = await authStorage.getCurrentPatient()
-        if (!patient?.id) { setLoading(false); return }
-        if (patient.nickname) setPatientNickname(patient.nickname)
-        setPatientId(patient.id)
-        seizureLogsApi
-          .list(patient.id)
-          .then(setLogs)
-          .catch(() => setLogs([]))
-          .finally(() => setLoading(false))
-      }
-      load()
-    }, [])
+    useCallback(() => { loadLogs() }, [loadLogs])
   )
 
   const realLogs = logs.filter((l) => !l.isFalseAlarm)
@@ -134,30 +136,35 @@ export default function HistoryScreen() {
           <Text style={s.eyebrow}>Seizure log</Text>
           <Text style={s.title}>History</Text>
         </View>
-        <Pressable
-          style={[s.exportBtn, exporting && s.exportBtnDisabled]}
-          onPress={async () => {
-            if (logs.length === 0) {
-              Alert.alert('No data', 'Log at least one seizure before exporting.')
-              return
+        <View style={s.headerActions}>
+          <Pressable style={s.viewToggleBtn} onPress={() => setTableView((v) => !v)}>
+            <Ionicons name={tableView ? 'list-outline' : 'grid-outline'} size={15} color={STEADY.accent.deep} />
+          </Pressable>
+          <Pressable
+            style={[s.exportBtn, exporting && s.exportBtnDisabled]}
+            onPress={async () => {
+              if (logs.length === 0) {
+                Alert.alert('No data', 'Log at least one seizure before exporting.')
+                return
+              }
+              setExporting(true)
+              try {
+                await exportNeurologistPDF(patientNickname, logs)
+              } catch {
+                Alert.alert('Export failed', 'Could not generate PDF. Please try again.')
+              } finally {
+                setExporting(false)
+              }
+            }}
+            disabled={exporting}
+          >
+            {exporting
+              ? <ActivityIndicator size="small" color={STEADY.accent.deep} />
+              : <Ionicons name="download-outline" size={13} color={STEADY.accent.deep} />
             }
-            setExporting(true)
-            try {
-              await exportNeurologistPDF(patientNickname, logs)
-            } catch {
-              Alert.alert('Export failed', 'Could not generate PDF. Please try again.')
-            } finally {
-              setExporting(false)
-            }
-          }}
-          disabled={exporting}
-        >
-          {exporting
-            ? <ActivityIndicator size="small" color={STEADY.accent.deep} />
-            : <Ionicons name="download-outline" size={13} color={STEADY.accent.deep} />
-          }
-          <Text style={s.exportLabel}>{exporting ? 'Generating…' : 'Export PDF'}</Text>
-        </Pressable>
+            <Text style={s.exportLabel}>{exporting ? 'Generating…' : 'Export PDF'}</Text>
+          </Pressable>
+        </View>
       </View>
 
       {/* Stats strip */}
@@ -186,15 +193,59 @@ export default function HistoryScreen() {
         </View>
       )}
 
-      {/* List */}
+      {/* List / Table */}
       {loading ? (
         <Text style={s.emptyText}>Loading…</Text>
       ) : logs.length === 0 ? (
-        <View style={s.emptyState}>
-          <Text style={s.emptyIcon}>📋</Text>
-          <Text style={s.emptyTitle}>No seizures logged yet</Text>
-          <Text style={s.emptySub}>When you log a seizure from the Emergency Hub, it will appear here.</Text>
-        </View>
+        <ScrollView
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => loadLogs(true)} />}
+          contentContainerStyle={{ flex: 1 }}
+        >
+          <View style={s.emptyState}>
+            <Text style={s.emptyIcon}>📋</Text>
+            <Text style={s.emptyTitle}>No seizures logged yet</Text>
+            <Text style={s.emptySub}>When you log a seizure from the Emergency Hub, it will appear here.</Text>
+          </View>
+        </ScrollView>
+      ) : tableView ? (
+        <ScrollView
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => loadLogs(true)} />}
+          contentContainerStyle={s.list}
+          showsVerticalScrollIndicator={false}
+          horizontal={false}
+        >
+          {/* Table header */}
+          <View style={t.header}>
+            <Text style={[t.hCell, { flex: 1.2 }]}>Date</Text>
+            <Text style={[t.hCell, { flex: 1 }]}>Time</Text>
+            <Text style={[t.hCell, { flex: 1 }]}>Duration</Text>
+            <Text style={[t.hCell, { flex: 1.4 }]}>Type</Text>
+            <Text style={[t.hCell, { flex: 1.2 }]}>Weather</Text>
+          </View>
+          {logs.map((log, i) => {
+            const d = new Date(log.startedAt)
+            const dateStr = d.toLocaleDateString([], { month: 'short', day: 'numeric' })
+            const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            const dur = log.durationSeconds != null ? formatDuration(log.durationSeconds) : '—'
+            const type = log.isFalseAlarm
+              ? 'False alarm'
+              : log.seizureType
+                ? (SEIZURE_TYPE_LABEL[log.seizureType] ?? log.seizureType)
+                : 'Seizure'
+            const weather = log.weatherTempC != null
+              ? `${log.weatherTempC}°C`
+              : '—'
+            return (
+              <View key={log.id} style={[t.row, i % 2 === 0 && t.rowAlt]}>
+                <Text style={[t.cell, { flex: 1.2 }]}>{dateStr}</Text>
+                <Text style={[t.cell, { flex: 1 }]}>{timeStr}</Text>
+                <Text style={[t.cell, { flex: 1, color: log.durationSeconds != null && log.durationSeconds >= 300 ? STEADY.emergency.base : STEADY.ink.primary }]}>{dur}</Text>
+                <Text style={[t.cell, { flex: 1.4, color: log.isFalseAlarm ? STEADY.ink.tertiary : STEADY.ink.primary }]}>{type}</Text>
+                <Text style={[t.cell, { flex: 1.2 }]}>{weather}</Text>
+              </View>
+            )
+          })}
+        </ScrollView>
       ) : (
         <FlatList
           data={logs}
@@ -202,6 +253,7 @@ export default function HistoryScreen() {
           renderItem={({ item }) => <EventCard log={item} />}
           contentContainerStyle={s.list}
           showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => loadLogs(true)} />}
         />
       )}
     </SafeAreaView>
@@ -213,6 +265,8 @@ const s = StyleSheet.create({
   headerRow:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 14, paddingBottom: 12 },
   eyebrow:      { fontSize: 13, color: STEADY.ink.secondary },
   title:        { fontSize: 28, fontWeight: '700', letterSpacing: -0.5, color: STEADY.ink.primary },
+  headerActions:{ flexDirection: 'row', alignItems: 'center', gap: 8 },
+  viewToggleBtn:{ paddingHorizontal: 10, paddingVertical: 8, borderRadius: STEADY.r.pill, borderWidth: 1, borderColor: STEADY.border.light, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
   exportBtn:        { paddingHorizontal: 12, paddingVertical: 8, borderRadius: STEADY.r.pill, borderWidth: 1, borderColor: STEADY.border.light, backgroundColor: '#fff', flexDirection: 'row', alignItems: 'center', gap: 6 },
   exportBtnDisabled:{ opacity: 0.6 },
   exportLabel:  { fontSize: 13, fontWeight: '600', color: STEADY.accent.deep },
@@ -226,6 +280,14 @@ const s = StyleSheet.create({
   emptyIcon:    { fontSize: 40 },
   emptyTitle:   { fontSize: 17, fontWeight: '600', color: STEADY.ink.primary, textAlign: 'center' },
   emptySub:     { fontSize: 14, color: STEADY.ink.secondary, textAlign: 'center', lineHeight: 21 },
+})
+
+const t = StyleSheet.create({
+  header:   { flexDirection: 'row', backgroundColor: STEADY.bg.sunken, paddingHorizontal: 12, paddingVertical: 8, borderRadius: STEADY.r.md, marginBottom: 2 },
+  hCell:    { fontSize: 10, fontWeight: '700', color: STEADY.ink.tertiary, letterSpacing: 0.8, textTransform: 'uppercase' },
+  row:      { flexDirection: 'row', paddingHorizontal: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: STEADY.border.light },
+  rowAlt:   { backgroundColor: 'rgba(0,0,0,0.02)' },
+  cell:     { fontSize: 12, color: STEADY.ink.primary },
 })
 
 const ev = StyleSheet.create({

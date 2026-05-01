@@ -47,6 +47,13 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="nearby-doctors"
+        options={{
+          title: 'Doctors',
+          tabBarIcon: ({ color, size }) => <Ionicons name="medical-outline" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="settings"
         options={{
           title: 'Settings',

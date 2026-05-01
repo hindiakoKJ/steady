@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
+import { useFocusEffect } from 'expo-router'
 import { View, Text, ScrollView, Pressable, StyleSheet, Alert } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
@@ -18,21 +19,23 @@ export default function SettingsScreen() {
   const [currentPatient, setCurrentPatient] = useState<{ id: string; nickname: string } | null>(null)
   const [smsEnabled, setSmsEnabled] = useState(true)
 
-  useEffect(() => {
-    const load = async () => {
-      const patient = await authStorage.getCurrentPatient()
-      setCurrentPatient(patient)
-      try {
-        const list = await contactsApi.list()
-        setContacts(list)
-      } catch {
-        // Not yet connected to API — silently ignore
+  useFocusEffect(
+    useCallback(() => {
+      const load = async () => {
+        const patient = await authStorage.getCurrentPatient()
+        setCurrentPatient(patient)
+        try {
+          const list = await contactsApi.list()
+          setContacts(list)
+        } catch {
+          // Not yet connected to API — silently ignore
+        }
+        const stored = await AsyncStorage.getItem(SMS_BEACON_KEY)
+        setSmsEnabled(stored === null ? true : stored === 'true')
       }
-      const stored = await AsyncStorage.getItem(SMS_BEACON_KEY)
-      setSmsEnabled(stored === null ? true : stored === 'true')
-    }
-    load()
-  }, [])
+      load()
+    }, [])
+  )
 
   const handleSmsToggle = async (val: boolean) => {
     setSmsEnabled(val)

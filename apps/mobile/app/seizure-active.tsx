@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { View, Text, Pressable, StyleSheet, Alert, Modal, ScrollView, TextInput } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { useRouter } from 'expo-router'
+import { useRouter, useLocalSearchParams } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { STEADY } from '@repo/ui'
 import { seizureLogsApi } from '@/lib/api'
-import type { SeizureType, SeizureTrigger } from '@repo/types'
+import type { SeizureType, SeizureTrigger, WeatherData } from '@repo/types'
 
 const RING_SIZE = 280
 const FALSE_ALARM_THRESHOLD = 5  // seconds
@@ -40,11 +40,21 @@ const TRIGGER_OPTIONS: { value: SeizureTrigger; label: string; emoji: string }[]
 
 export default function SeizureActive() {
   const router = useRouter()
-  const [seconds, setSeconds] = useState(0)
+  const { startedAt } = useLocalSearchParams<{ startedAt?: string }>()
+
+  // Init timer from the exact moment the button was pressed (not when screen loaded)
+  const initialSeconds = startedAt
+    ? Math.floor((Date.now() - new Date(startedAt).getTime()) / 1000)
+    : 0
+
+  const [seconds, setSeconds] = useState(Math.max(0, initialSeconds))
   const [ending, setEnding] = useState(false)
   const [aidStep, setAidStep] = useState(0)
   const [videoReminderVisible, setVideoReminderVisible] = useState(true)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  // Holds weather fetched in background by the AURA button
+  const weatherRef = useRef<WeatherData | null>(null)
 
   // Post-seizure notes modal
   const [notesModal, setNotesModal] = useState(false)
@@ -62,6 +72,20 @@ export default function SeizureActive() {
     AsyncStorage.getItem('@steady/activeSeizureLogId').then((id) => {
       logIdRef.current = id
     })
+    // Poll for background weather (set by AURA button) — check every 2s for up to 30s
+    let attempts = 0
+    const weatherPoll = setInterval(async () => {
+      attempts++
+      const raw = await AsyncStorage.getItem('@steady/pendingWeather')
+      if (raw) {
+        weatherRef.current = JSON.parse(raw)
+        await AsyncStorage.removeItem('@steady/pendingWeather')
+        clearInterval(weatherPoll)
+      } else if (attempts >= 15) {
+        clearInterval(weatherPoll) // give up after 30s
+      }
+    }, 2000)
+    return () => clearInterval(weatherPoll)
   }, [])
 
   useEffect(() => {
@@ -115,6 +139,7 @@ export default function SeizureActive() {
     setNotesModal(false)
     try {
       const id = logIdRef.current
+      const w = weatherRef.current  // weather captured in background
       if (id) {
         await seizureLogsApi.end(id, {
           endedAt: new Date().toISOString(),
@@ -125,6 +150,12 @@ export default function SeizureActive() {
           injuryOccurred: isFalseAlarm ? undefined : (injuryOccurred ?? undefined),
           postictalMinutes: isFalseAlarm ? undefined : (postictalMinutes ?? undefined),
           notes: isFalseAlarm ? undefined : (notes.trim() || undefined),
+          // Attach background weather if it arrived in time
+          weatherTempC: w?.tempC,
+          weatherCondition: w?.condition,
+          weatherHumidity: w?.humidity,
+          latitude: w?.lat,
+          longitude: w?.lon,
         })
         await AsyncStorage.removeItem('@steady/activeSeizureLogId')
       }

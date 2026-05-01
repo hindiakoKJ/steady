@@ -174,21 +174,25 @@ export default function EmergencyHub() {
       Alert.alert('No Patient', 'Please select a patient first.')
       return
     }
+    // Capture the exact moment the button was pressed — timer will count from here
+    const startedAt = new Date().toISOString()
     setAuraLoading(true)
     try {
-      const weather = await fetchCurrentWeather()
+      // Create log immediately — no weather yet so there is zero delay
       const log = await seizureLogsApi.start({
         patientId: currentPatient.id,
-        startedAt: new Date().toISOString(),
+        startedAt,
         triggeredBy: 'AURA',
-        weatherTempC: weather?.tempC,
-        weatherCondition: weather?.condition,
-        weatherHumidity: weather?.humidity,
-        latitude: weather?.lat,
-        longitude: weather?.lon,
       })
       await AsyncStorage.setItem('@steady/activeSeizureLogId', log.id)
-      router.push('/seizure-active')
+      // Navigate immediately — timer starts from startedAt
+      router.push({ pathname: '/seizure-active', params: { startedAt } })
+      // Fetch weather silently in background — seizure-active will pick it up
+      fetchCurrentWeather()
+        .then((w) => {
+          if (w) AsyncStorage.setItem('@steady/pendingWeather', JSON.stringify(w))
+        })
+        .catch(() => {/* silent */})
     } catch (e) {
       Alert.alert('AURA Error', (e as any)?.response?.data?.message || (e as any)?.message || 'Could not log seizure')
     } finally {

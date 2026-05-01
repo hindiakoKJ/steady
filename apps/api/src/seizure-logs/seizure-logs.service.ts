@@ -53,6 +53,12 @@ export class SeizureLogsService {
         injuryOccurred: dto.injuryOccurred,
         postictalMinutes: dto.postictalMinutes,
         notes: dto.notes,
+        // Weather captured in background — only update if not already set from create
+        ...(dto.weatherTempC != null && !log.weatherTempC ? { weatherTempC: dto.weatherTempC } : {}),
+        ...(dto.weatherCondition  && !log.weatherCondition ? { weatherCondition: dto.weatherCondition } : {}),
+        ...(dto.weatherHumidity != null && !log.weatherHumidity ? { weatherHumidity: dto.weatherHumidity } : {}),
+        ...(dto.latitude != null  && !log.latitude  ? { latitude: dto.latitude } : {}),
+        ...(dto.longitude != null && !log.longitude ? { longitude: dto.longitude } : {}),
       },
     })
   }

@@ -106,6 +106,12 @@ export interface EndSeizureLogRequest {
   injuryOccurred?: boolean
   postictalMinutes?: number
   notes?: string
+  // Weather captured in background during seizure
+  weatherTempC?: number
+  weatherCondition?: string
+  weatherHumidity?: number
+  latitude?: number
+  longitude?: number
 }
 
 export interface FireBeaconRequest {

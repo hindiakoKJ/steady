@@ -1,6 +1,6 @@
 import {
   IsISO8601, IsOptional, IsString, IsBoolean,
-  IsIn, IsArray, IsInt, Min, MaxLength,
+  IsIn, IsArray, IsInt, IsNumber, Min, MaxLength,
 } from 'class-validator'
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
 
@@ -52,4 +52,30 @@ export class EndSeizureLogDto {
   @IsString()
   @MaxLength(500)
   notes?: string
+
+  // Weather captured in background during the seizure
+  @ApiPropertyOptional({ example: 32.5 })
+  @IsOptional()
+  @IsNumber()
+  weatherTempC?: number
+
+  @ApiPropertyOptional({ example: 'Rain' })
+  @IsOptional()
+  @IsString()
+  weatherCondition?: string
+
+  @ApiPropertyOptional({ example: 80 })
+  @IsOptional()
+  @IsInt()
+  weatherHumidity?: number
+
+  @ApiPropertyOptional({ example: 14.5995 })
+  @IsOptional()
+  @IsNumber()
+  latitude?: number
+
+  @ApiPropertyOptional({ example: 120.9842 })
+  @IsOptional()
+  @IsNumber()
+  longitude?: number
 }
