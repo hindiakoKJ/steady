@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { useFocusEffect } from 'expo-router'
+import { useFocusEffect, useRouter } from 'expo-router'
 import { View, Text, FlatList, Pressable, StyleSheet, Alert, ActivityIndicator, RefreshControl, ScrollView } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
@@ -85,6 +85,7 @@ function EventCard({ log }: { log: SeizureLog }) {
 }
 
 export default function HistoryScreen() {
+  const router = useRouter()
   const [logs, setLogs] = useState<SeizureLog[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -137,6 +138,9 @@ export default function HistoryScreen() {
           <Text style={s.title}>History</Text>
         </View>
         <View style={s.headerActions}>
+          <Pressable style={s.viewToggleBtn} onPress={() => router.push('/vitals' as any)}>
+            <Ionicons name="heart-outline" size={15} color={STEADY.accent.deep} />
+          </Pressable>
           <Pressable style={s.viewToggleBtn} onPress={() => setTableView((v) => !v)}>
             <Ionicons name={tableView ? 'list-outline' : 'grid-outline'} size={15} color={STEADY.accent.deep} />
           </Pressable>

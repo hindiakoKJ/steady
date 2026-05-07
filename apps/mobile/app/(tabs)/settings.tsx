@@ -7,8 +7,9 @@ import { Ionicons } from '@expo/vector-icons'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { STEADY } from '@repo/ui'
 import { SettingRow, SettingsGroup } from '@/components/SettingsRow'
-import { contactsApi } from '@/lib/api'
+import { contactsApi, seizureLogsApi } from '@/lib/api'
 import { authStorage } from '@/lib/auth'
+import { exportEmergencyCard } from '@/lib/emergency-card-pdf'
 import type { EmergencyContact } from '@repo/types'
 
 export const SMS_BEACON_KEY   = '@steady/smsBeaconEnabled'
@@ -105,6 +106,35 @@ export default function SettingsScreen() {
 
         {/* Safety group */}
         <SettingsGroup title="Safety">
+          <SettingRow
+            icon={<Ionicons name="qr-code-outline" size={16} color={STEADY.emergency.base} />}
+            iconColor={STEADY.emergency.base}
+            iconBg={STEADY.emergency.soft}
+            title="Emergency QR card"
+            sub="Scannable card any bystander can read — no server, stays on this phone"
+            onPress={() => router.push('/emergency-qr' as any)}
+          />
+          <SettingRow
+            icon={<Ionicons name="print-outline" size={16} color={STEADY.emergency.base} />}
+            iconColor={STEADY.emergency.base}
+            iconBg={STEADY.emergency.soft}
+            title="Print emergency card (PDF)"
+            sub="Wallet-sized PDF with seizure type, triggers, and contacts"
+            onPress={async () => {
+              try {
+                const patient = await authStorage.getCurrentPatient()
+                const [fetchedLogs, fetchedContacts] = await Promise.allSettled([
+                  patient?.id ? seizureLogsApi.list(patient.id) : Promise.resolve([]),
+                  contactsApi.list(),
+                ])
+                const logs = fetchedLogs.status === 'fulfilled' ? fetchedLogs.value : []
+                const contactList = fetchedContacts.status === 'fulfilled' ? fetchedContacts.value : []
+                await exportEmergencyCard(patient?.nickname ?? 'Patient', logs, contactList)
+              } catch {
+                Alert.alert('Error', 'Could not generate emergency card. Please try again.')
+              }
+            }}
+          />
           <SettingRow
             icon={<Ionicons name="call-outline" size={16} color={STEADY.emergency.base} />}
             iconColor={STEADY.emergency.base}

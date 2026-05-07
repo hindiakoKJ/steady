@@ -144,6 +144,18 @@ export interface WeatherData {
   lon: number
 }
 
+// ─── Vitals ──────────────────────────────────────────────────────────────────
+
+export type VitalType = 'heart_rate' | 'spo2'
+
+export interface VitalEntry {
+  id: string
+  type: VitalType
+  value: number
+  note?: string
+  recordedAt: string
+}
+
 // ─── Language ────────────────────────────────────────────────────────────────
 
 export type Lang = 'en' | 'tl'
