@@ -231,6 +231,18 @@ export default function NearbyDoctors() {
 
   return (
     <SafeAreaView style={s.root}>
+      {/* API key missing banner */}
+      {!PLACES_KEY && (
+        <View style={s.keyBanner}>
+          <Ionicons name="warning-outline" size={15} color="#92400e" />
+          <Text style={s.keyBannerText}>
+            Google API key not configured. Add{' '}
+            <Text style={{ fontWeight: '700' }}>EXPO_PUBLIC_GOOGLE_PLACES_KEY</Text>
+            {' '}to EAS secrets and rebuild.
+          </Text>
+        </View>
+      )}
+
       {viewMode === 'map' && searched && places.length > 0 ? (
         // ── MAP VIEW ──────────────────────────────────────────────────
         <View style={{ flex: 1 }}>
@@ -366,6 +378,14 @@ export default function NearbyDoctors() {
 const s = StyleSheet.create({
   root:             { flex: 1, backgroundColor: STEADY.bg.light },
   listContent:      { paddingBottom: 32 },
+
+  // API key missing banner
+  keyBanner:        {
+    flexDirection: 'row', alignItems: 'flex-start', gap: 8,
+    backgroundColor: '#fef3c7', borderBottomWidth: 1, borderColor: '#fde68a',
+    paddingHorizontal: 16, paddingVertical: 10,
+  },
+  keyBannerText:    { flex: 1, fontSize: 12, color: '#92400e', lineHeight: 17 },
 
   // Header
   header:           { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12 },

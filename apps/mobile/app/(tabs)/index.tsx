@@ -9,7 +9,7 @@ import { useRouter } from 'expo-router'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Ionicons } from '@expo/vector-icons'
 import { STEADY } from '@repo/ui'
-import { fetchCurrentWeather, getCurrentLocation } from '@/hooks/useWeather'
+import { fetchCurrentWeatherWithReason, getCurrentLocation } from '@/hooks/useWeather'
 import { useAccelerometer } from '@/hooks/useAccelerometer'
 import { seizureLogsApi, contactsApi } from '@/lib/api'
 import { authStorage } from '@/lib/auth'
@@ -83,7 +83,17 @@ export default function EmergencyHub() {
     try {
       // Fire server beacon — push notifications to all app users
       if (preview.activeLogId) {
-        await seizureLogsApi.fireBeacon(preview.activeLogId, preview.lat, preview.lon)
+        try {
+          await seizureLogsApi.fireBeacon(preview.activeLogId, preview.lat, preview.lon)
+        } catch (beaconErr: any) {
+          const status = beaconErr?.response?.status
+          if (status === 404 || status === 403) {
+            // Stale log ID from a previous session/build — clear it and fall through to SMS
+            await AsyncStorage.removeItem('@steady/activeSeizureLogId')
+          } else {
+            throw beaconErr  // real server error — surface to user
+          }
+        }
       }
 
       const phoneContacts = preview.contacts.filter((c) => c.phoneNumber)
@@ -195,12 +205,13 @@ export default function EmergencyHub() {
       await AsyncStorage.setItem('@steady/activeSeizureLogId', log.id)
       // Navigate immediately — timer starts from startedAt
       router.push({ pathname: '/seizure-active', params: { startedAt } })
-      // Fetch weather silently in background — seizure-active will pick it up
-      fetchCurrentWeather()
-        .then((w) => {
-          if (w) AsyncStorage.setItem('@steady/pendingWeather', JSON.stringify(w))
+      // Fetch weather in background — write result (including failure reason) so
+      // seizure-active can show a status badge and we can attach it on log end
+      fetchCurrentWeatherWithReason()
+        .then((result) => {
+          AsyncStorage.setItem('@steady/pendingWeather', JSON.stringify(result))
         })
-        .catch(() => {/* silent */})
+        .catch(() => {/* network totally unavailable — seizure-active will time out and show error */})
     } catch (e) {
       Alert.alert('AURA Error', (e as any)?.response?.data?.message || (e as any)?.message || 'Could not log seizure')
     } finally {
@@ -219,10 +230,11 @@ export default function EmergencyHub() {
       }
 
       // Fetch weather + GPS together. Fall back to GPS-only if offline.
-      const [weather, existingId] = await Promise.all([
-        fetchCurrentWeather(),
+      const [weatherResult, existingId] = await Promise.all([
+        fetchCurrentWeatherWithReason(),
         AsyncStorage.getItem('@steady/activeSeizureLogId'),
       ])
+      const weather = weatherResult.data
       const location = weather ? { lat: weather.lat, lon: weather.lon } : await getCurrentLocation()
 
       // BEACON always creates a seizure log if one isn't already running

@@ -10,6 +10,7 @@ import { authStorage } from '@/lib/auth'
 import * as ExpoSms from 'expo-sms'
 import { SMS_BEACON_KEY, AUTO_ALERT_KEY, SHARE_GPS_KEY } from '@/app/(tabs)/settings'
 import type { SeizureType, SeizureTrigger, WeatherData, EmergencyContact } from '@repo/types'
+import type { WeatherFailReason } from '@/hooks/useWeather'
 
 const RING_SIZE = 280
 const FALSE_ALARM_THRESHOLD = 5  // seconds
@@ -58,6 +59,8 @@ export default function SeizureActive() {
 
   // Holds weather fetched in background by the AURA button
   const weatherRef = useRef<WeatherData | null>(null)
+  // Track weather capture status so we can show a badge
+  const [weatherStatus, setWeatherStatus] = useState<'capturing' | 'captured' | WeatherFailReason>('capturing')
 
   // Post-seizure notes modal
   const [notesModal, setNotesModal] = useState(false)
@@ -105,11 +108,29 @@ export default function SeizureActive() {
       attempts++
       const raw = await AsyncStorage.getItem('@steady/pendingWeather')
       if (raw) {
-        weatherRef.current = JSON.parse(raw)
+        try {
+          const parsed = JSON.parse(raw)
+          // Distinguish result object { data, reason } from legacy plain WeatherData
+          if (parsed && 'data' in parsed) {
+            if (parsed.data) {
+              weatherRef.current = parsed.data
+              setWeatherStatus('captured')
+            } else {
+              setWeatherStatus(parsed.reason ?? 'network_error')
+            }
+          } else {
+            // legacy format — plain WeatherData
+            weatherRef.current = parsed
+            setWeatherStatus('captured')
+          }
+        } catch {
+          setWeatherStatus('network_error')
+        }
         await AsyncStorage.removeItem('@steady/pendingWeather')
         clearInterval(weatherPoll)
       } else if (attempts >= 15) {
         clearInterval(weatherPoll) // give up after 30s
+        setWeatherStatus('location_unavailable')
       }
     }, 2000)
     return () => clearInterval(weatherPoll)
@@ -119,22 +140,6 @@ export default function SeizureActive() {
     intervalRef.current = setInterval(() => setSeconds((s) => s + 1), 1000)
     return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
   }, [])
-
-  // Advance first-aid step every 30 seconds + auto-alert at 5 min
-  useEffect(() => {
-    if (seconds > 0 && seconds % 30 === 0 && aidStep < AID_STEPS.length - 1) {
-      setAidStep((s) => s + 1)
-    }
-    // Auto-BEACON at exactly 5 minutes if setting is on
-    if (seconds === 300 && autoAlertEnabledRef.current && !autoAlertFiredRef.current) {
-      autoAlertFiredRef.current = true
-      fireAutoAlert()
-    }
-  }, [seconds, fireAutoAlert])
-
-  const mm = String(Math.floor(seconds / 60)).padStart(2, '0')
-  const ss = String(seconds % 60).padStart(2, '0')
-  const past5 = seconds >= 300
 
   // ── Auto-alert at 5 minutes ───────────────────────────────────────────────
   const fireAutoAlert = useCallback(async () => {
@@ -156,6 +161,22 @@ export default function SeizureActive() {
       }
     } catch { /* silent — don't interrupt the caregiver */ }
   }, [contacts])
+
+  // Advance first-aid step every 30 seconds + auto-alert at 5 min
+  useEffect(() => {
+    if (seconds > 0 && seconds % 30 === 0 && aidStep < AID_STEPS.length - 1) {
+      setAidStep((s) => s + 1)
+    }
+    // Auto-BEACON at exactly 5 minutes if setting is on
+    if (seconds === 300 && autoAlertEnabledRef.current && !autoAlertFiredRef.current) {
+      autoAlertFiredRef.current = true
+      fireAutoAlert()
+    }
+  }, [seconds, fireAutoAlert])
+
+  const mm = String(Math.floor(seconds / 60)).padStart(2, '0')
+  const ss = String(seconds % 60).padStart(2, '0')
+  const past5 = seconds >= 300
 
   // ── End seizure — check false alarm threshold ────────────────────────────
   const handleEnd = useCallback(() => {
@@ -395,6 +416,29 @@ export default function SeizureActive() {
         </Pressable>
       )}
 
+      {/* Weather capture status */}
+      {weatherStatus !== 'capturing' && weatherStatus !== 'captured' && (
+        <Pressable
+          style={s.weatherBanner}
+          onPress={() => {
+            const msgs: Record<string, string> = {
+              location_denied: 'Location permission was denied. Open your phone\'s Settings → Apps → Steady → Permissions → Location → Allow.',
+              location_unavailable: 'Could not get GPS. Weather won\'t be recorded for this seizure.',
+              api_key_missing: 'OpenWeather API key not configured. Contact the developer.',
+              api_error: 'Weather service returned an error. Weather won\'t be recorded.',
+              network_error: 'No internet connection. Weather won\'t be recorded.',
+            }
+            Alert.alert('Weather not captured', msgs[weatherStatus] ?? 'Unknown error', [{ text: 'OK' }])
+          }}
+        >
+          <Text style={s.weatherBannerText}>
+            {weatherStatus === 'location_denied'
+              ? '⚠️ No location permission — weather not recorded. Tap for details.'
+              : '⚠️ Weather capture failed. Tap for details.'}
+          </Text>
+        </Pressable>
+      )}
+
       {/* Ring timer */}
       <View style={s.ringArea}>
         <View style={[s.ringCircle, { borderColor: past5 ? STEADY.emergency.base : STEADY.warn.base }]}>
@@ -478,6 +522,14 @@ const s = StyleSheet.create({
   videoReminderText:  { flex: 1 },
   videoReminderTitle: { fontSize: 13, fontWeight: '600', color: STEADY.ink.onDark },
   videoReminderSub:   { fontSize: 11, color: STEADY.ink.onDarkSec, marginTop: 2, lineHeight: 16 },
+  weatherBanner:      {
+    marginHorizontal: 16, marginTop: 4, marginBottom: 2,
+    paddingHorizontal: 12, paddingVertical: 8,
+    borderRadius: STEADY.r.md,
+    backgroundColor: 'rgba(216,136,32,0.12)',
+    borderWidth: 1, borderColor: STEADY.warn.base,
+  },
+  weatherBannerText:  { fontSize: 11, color: STEADY.warn.base, lineHeight: 16 },
   ringArea:           { alignItems: 'center', paddingTop: 12, paddingBottom: 8 },
   ringCircle:         {
     width: RING_SIZE, height: RING_SIZE, borderRadius: RING_SIZE / 2,
