@@ -4,14 +4,13 @@ module.exports = {
   ...appJson,
   expo: {
     ...appJson.expo,
-    plugins: [
-      ...appJson.expo.plugins,
-      [
-        'react-native-maps',
-        {
-          googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_PLACES_KEY ?? '',
+    android: {
+      ...appJson.expo.android,
+      config: {
+        googleMaps: {
+          apiKey: process.env.EXPO_PUBLIC_GOOGLE_PLACES_KEY ?? '',
         },
-      ],
-    ],
+      },
+    },
   },
 }
