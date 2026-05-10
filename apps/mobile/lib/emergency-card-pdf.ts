@@ -70,36 +70,19 @@ export async function exportEmergencyCard(
 <meta charset="UTF-8"/>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  @page { size: A4; margin: 12mm; }
-  body {
-    font-family: -apple-system, Helvetica, Arial, sans-serif;
-    color: #1A1F24;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0;
-  }
+  /* Each page is exactly one ID card face — opens at readable size on screen */
+  @page { size: 85.6mm 54mm; margin: 0; }
+  body { font-family: -apple-system, Helvetica, Arial, sans-serif; color: #1A1F24; }
 
-  .cut-label {
-    font-size: 9px;
-    color: #aaa;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    margin-bottom: 4px;
-    align-self: flex-start;
-    margin-left: 20px;
-  }
+  .cut-label { display: none; }
 
-  /* ── Wallet card: 85.6mm × 54mm (standard ID) ── */
+  /* ── Full-page card face ── */
   .id-card {
     width: 85.6mm;
     height: 54mm;
-    border-radius: 4mm;
     overflow: hidden;
-    border: 1px solid #ddd;
-    box-shadow: 0 1px 6px rgba(0,0,0,0.12);
     position: relative;
-    page-break-inside: avoid;
+    page-break-after: always;
   }
 
   /* ──────────── FRONT ──────────── */
@@ -309,7 +292,6 @@ export async function exportEmergencyCard(
 <body>
 
   <!-- ── FRONT ────────────────────────────────────── -->
-  <div class="cut-label">Front — print &amp; laminate</div>
   <div class="id-card front">
     <div class="front-header">
       <div class="front-header-left">
@@ -349,10 +331,7 @@ export async function exportEmergencyCard(
     </div>
   </div>
 
-  <hr class="card-separator"/>
-
   <!-- ── BACK ─────────────────────────────────────── -->
-  <div class="cut-label">Back</div>
   <div class="id-card back">
     <div class="back-header">
       <div class="back-header-title">⚡ If I am having a seizure — here's what to do</div>
