@@ -70,207 +70,342 @@ export async function exportEmergencyCard(
 <meta charset="UTF-8"/>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  @page { size: A4; margin: 20mm; }
-  body { font-family: -apple-system, Helvetica, Arial, sans-serif; color: #1A1F24; }
-
-  .card {
-    max-width: 560px;
-    margin: 0 auto;
-    border: 3px solid #C8312B;
-    border-radius: 16px;
-    overflow: hidden;
+  @page { size: A4; margin: 12mm; }
+  body {
+    font-family: -apple-system, Helvetica, Arial, sans-serif;
+    color: #1A1F24;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
   }
 
-  .card-header {
+  .cut-label {
+    font-size: 9px;
+    color: #aaa;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    align-self: flex-start;
+    margin-left: 20px;
+  }
+
+  /* ── Wallet card: 85.6mm × 54mm (standard ID) ── */
+  .id-card {
+    width: 85.6mm;
+    height: 54mm;
+    border-radius: 4mm;
+    overflow: hidden;
+    border: 1px solid #ddd;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.12);
+    position: relative;
+    page-break-inside: avoid;
+  }
+
+  /* ──────────── FRONT ──────────── */
+  .front { background: #fff; display: flex; flex-direction: column; }
+
+  .front-header {
     background: #C8312B;
-    padding: 20px 24px 16px;
+    padding: 3.5mm 4mm 3mm;
     display: flex;
     align-items: center;
-    gap: 14px;
+    justify-content: space-between;
   }
-  .header-icon { font-size: 36px; }
-  .header-text h1 {
-    font-size: 22px;
+  .front-header-left { display: flex; flex-direction: column; gap: 0.5mm; }
+  .front-tag {
+    font-size: 6.5px;
+    font-weight: 800;
+    letter-spacing: 1.2px;
+    color: rgba(255,255,255,0.8);
+    text-transform: uppercase;
+  }
+  .front-title {
+    font-size: 11px;
+    font-weight: 900;
+    color: #fff;
+    letter-spacing: 0.3px;
+    line-height: 1;
+  }
+  .front-badge {
+    background: rgba(255,255,255,0.2);
+    border-radius: 2mm;
+    padding: 1.5mm 3mm;
+    font-size: 8px;
     font-weight: 800;
     color: #fff;
     letter-spacing: 0.5px;
-  }
-  .header-text p {
-    font-size: 13px;
-    color: rgba(255,255,255,0.85);
-    margin-top: 3px;
+    text-align: center;
+    line-height: 1.3;
   }
 
-  .card-body { padding: 20px 24px; }
-
-  .patient-name {
-    font-size: 28px;
-    font-weight: 800;
-    color: #1A1F24;
-    margin-bottom: 4px;
-    letter-spacing: -0.5px;
-  }
-  .patient-sub {
-    font-size: 14px;
-    color: #5A6470;
-    margin-bottom: 20px;
+  .front-body {
+    flex: 1;
+    padding: 3mm 4mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
   }
 
-  .section { margin-bottom: 18px; }
-  .section-title {
-    font-size: 10px;
-    font-weight: 800;
-    text-transform: uppercase;
+  .patient-block { display: flex; flex-direction: column; gap: 0.8mm; }
+  .patient-label {
+    font-size: 6px;
+    font-weight: 700;
     letter-spacing: 1.2px;
     color: #8B95A1;
-    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+  .patient-name {
+    font-size: 16px;
+    font-weight: 900;
+    color: #1A1F24;
+    letter-spacing: -0.3px;
+    line-height: 1;
+  }
+  .patient-condition {
+    font-size: 8px;
+    font-weight: 700;
+    color: #C8312B;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
   }
 
-  .info-row {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    padding: 10px 12px;
+  .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5mm;
+  }
+  .info-cell {
     background: #F8F5F0;
-    border-radius: 10px;
-    margin-bottom: 6px;
+    border-radius: 1.5mm;
+    padding: 1.5mm 2mm;
   }
-  .info-label { font-size: 12px; color: #5A6470; font-weight: 600; min-width: 90px; }
-  .info-value { font-size: 13px; color: #1A1F24; font-weight: 500; flex: 1; }
+  .info-cell-label {
+    font-size: 5.5px;
+    font-weight: 700;
+    color: #8B95A1;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    margin-bottom: 0.5mm;
+  }
+  .info-cell-value {
+    font-size: 7.5px;
+    font-weight: 700;
+    color: #1A1F24;
+    line-height: 1.2;
+  }
 
-  .steps-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .step {
+  .front-footer {
+    border-top: 0.3mm solid #EDE8E0;
+    padding: 1.5mm 4mm;
     display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    padding: 10px 12px;
-    background: #f0f9f8;
-    border-radius: 10px;
-    border: 1px solid #b2d8d6;
+    align-items: center;
+    justify-content: space-between;
   }
+  .front-footer-app { font-size: 6px; font-weight: 700; color: #2E7D7A; letter-spacing: 0.3px; }
+  .front-footer-date { font-size: 5.5px; color: #aaa; }
+
+  /* ──────────── BACK ──────────── */
+  .back { background: #1A1F24; display: flex; flex-direction: column; }
+
+  .back-header {
+    background: #C8312B;
+    padding: 2.5mm 4mm;
+    display: flex;
+    align-items: center;
+    gap: 2mm;
+  }
+  .back-header-title {
+    font-size: 8px;
+    font-weight: 900;
+    color: #fff;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .back-body {
+    flex: 1;
+    padding: 2.5mm 4mm;
+    display: flex;
+    gap: 3mm;
+  }
+
+  .steps-col { flex: 1; display: flex; flex-direction: column; gap: 1.5mm; }
+  .step-row { display: flex; align-items: flex-start; gap: 1.5mm; }
   .step-num {
-    width: 22px;
-    height: 22px;
-    border-radius: 11px;
+    width: 3.5mm; height: 3.5mm; border-radius: 50%;
     background: #2E7D7A;
     color: #fff;
-    font-size: 11px;
-    font-weight: 800;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    font-size: 5.5px;
+    font-weight: 900;
+    display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
-    margin-top: 1px;
+    margin-top: 0.3mm;
   }
-  .step-text { font-size: 12px; color: #1A1F24; font-weight: 500; line-height: 16px; }
+  .step-text { font-size: 6.5px; color: #F2F4F7; font-weight: 500; line-height: 1.3; }
+  .step-text b { color: #fff; font-weight: 800; }
 
-  .donot-box {
-    background: #FFF4F4;
-    border: 1px solid #F5C1BE;
-    border-radius: 10px;
-    padding: 12px 14px;
-    margin-bottom: 18px;
+  .divider-v { width: 0.3mm; background: rgba(255,255,255,0.1); flex-shrink: 0; }
+
+  .contacts-col { width: 28mm; display: flex; flex-direction: column; gap: 1.5mm; }
+  .contacts-title {
+    font-size: 5.5px;
+    font-weight: 700;
+    color: #A8B2BD;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    margin-bottom: 0.5mm;
   }
-  .donot-title { font-size: 11px; font-weight: 800; color: #C8312B; letter-spacing: 1px; margin-bottom: 6px; }
-  .donot-items { display: flex; flex-wrap: wrap; gap: 6px; }
-  .donot-item { font-size: 12px; color: #C8312B; font-weight: 600; }
-  .donot-item::before { content: '✗ '; }
+  .contact-item { display: flex; flex-direction: column; gap: 0.3mm; }
+  .contact-name-text { font-size: 7px; font-weight: 700; color: #F2F4F7; line-height: 1; }
+  .contact-phone-text { font-size: 8px; font-weight: 900; color: #C8312B; line-height: 1; }
+  .contact-push-text { font-size: 6px; color: #A8B2BD; }
 
-  .contact-row {
+  .donot-strip {
+    background: rgba(200,49,43,0.15);
+    border-top: 0.3mm solid rgba(200,49,43,0.4);
+    padding: 1.5mm 4mm;
+    display: flex;
+    align-items: center;
+    gap: 2mm;
+    flex-wrap: wrap;
+  }
+  .donot-label { font-size: 6px; font-weight: 900; color: #C8312B; letter-spacing: 0.5px; flex-shrink: 0; }
+  .donot-item-text { font-size: 6px; color: #F2F4F7; font-weight: 500; }
+  .donot-item-text::before { content: '✗ '; color: #C8312B; font-weight: 900; }
+
+  .back-footer {
+    border-top: 0.3mm solid rgba(255,255,255,0.08);
+    padding: 1.5mm 4mm;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 12px;
-    background: #F8F5F0;
-    border-radius: 10px;
-    margin-bottom: 6px;
   }
-  .contact-name { font-size: 14px; font-weight: 700; color: #1A1F24; }
-  .contact-phone { font-size: 15px; font-weight: 700; color: #C8312B; text-decoration: none; }
-  .contact-phone-none { font-size: 12px; color: #8B95A1; }
+  .back-footer-911 { font-size: 7px; font-weight: 900; color: #C8312B; }
+  .back-footer-app { font-size: 5.5px; color: #5A6470; }
 
-  .card-footer {
-    border-top: 1px solid #EDE8E0;
-    padding: 12px 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+  /* ── separator between front and back ── */
+  .card-separator {
+    width: 85.6mm;
+    margin: 5mm 0;
+    border: none;
+    border-top: 0.3mm dashed #ccc;
+    position: relative;
   }
-  .footer-app { font-size: 13px; font-weight: 700; color: #2E7D7A; }
-  .footer-meta { font-size: 11px; color: #8B95A1; }
+  .card-separator::before {
+    content: '✂  fold or cut here';
+    position: absolute;
+    top: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 7px;
+    color: #bbb;
+    background: #fff;
+    padding: 0 2mm;
+    letter-spacing: 0.5px;
+  }
 </style>
 </head>
 <body>
-  <div class="card">
-    <div class="card-header">
-      <div class="header-icon">🚨</div>
-      <div class="header-text">
-        <h1>EPILEPSY EMERGENCY CARD</h1>
-        <p>This person may have a seizure. Please read and help.</p>
+
+  <!-- ── FRONT ────────────────────────────────────── -->
+  <div class="cut-label">Front — print &amp; laminate</div>
+  <div class="id-card front">
+    <div class="front-header">
+      <div class="front-header-left">
+        <div class="front-tag">Medical Alert</div>
+        <div class="front-title">EPILEPSY CARD</div>
+      </div>
+      <div class="front-badge">🚨<br/>SEIZURE<br/>PRONE</div>
+    </div>
+
+    <div class="front-body">
+      <div class="patient-block">
+        <div class="patient-label">Patient</div>
+        <div class="patient-name">${patientNickname}</div>
+        <div class="patient-condition">Has epilepsy · ${totalEpisodes > 0 ? `${totalEpisodes} episodes on record` : 'Epilepsy patient'}</div>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-cell">
+          <div class="info-cell-label">Seizure type</div>
+          <div class="info-cell-value">${seizureType}</div>
+        </div>
+        <div class="info-cell">
+          <div class="info-cell-label">Avg duration</div>
+          <div class="info-cell-value">${avgDuration !== '—' ? avgDuration : 'Not recorded'}</div>
+        </div>
+        ${triggers !== '—' ? `
+        <div class="info-cell" style="grid-column: span 2;">
+          <div class="info-cell-label">Known triggers</div>
+          <div class="info-cell-value">${triggers}</div>
+        </div>` : ''}
       </div>
     </div>
 
-    <div class="card-body">
-      <div class="patient-name">${patientNickname}</div>
-      <div class="patient-sub">Has epilepsy · ${totalEpisodes > 0 ? `${totalEpisodes} episode${totalEpisodes !== 1 ? 's' : ''} on record` : 'Epilepsy patient'}</div>
+    <div class="front-footer">
+      <div class="front-footer-app">Steady — Free epilepsy companion</div>
+      <div class="front-footer-date">${now}</div>
+    </div>
+  </div>
 
-      <div class="section">
-        <div class="section-title">Seizure Profile</div>
-        <div class="info-row">
-          <span class="info-label">Seizure type</span>
-          <span class="info-value">${seizureType}</span>
+  <hr class="card-separator"/>
+
+  <!-- ── BACK ─────────────────────────────────────── -->
+  <div class="cut-label">Back</div>
+  <div class="id-card back">
+    <div class="back-header">
+      <div class="back-header-title">⚡ If I am having a seizure — here's what to do</div>
+    </div>
+
+    <div class="back-body">
+      <div class="steps-col">
+        <div class="step-row">
+          <div class="step-num">1</div>
+          <div class="step-text"><b>Stay calm</b> and time the seizure</div>
         </div>
-        ${triggers !== '—' ? `
-        <div class="info-row">
-          <span class="info-label">Known triggers</span>
-          <span class="info-value">${triggers}</span>
-        </div>` : ''}
-        ${avgDuration !== '—' ? `
-        <div class="info-row">
-          <span class="info-label">Avg duration</span>
-          <span class="info-value">${avgDuration}</span>
-        </div>` : ''}
-      </div>
-
-      <div class="section">
-        <div class="section-title">What to do right now</div>
-        <div class="steps-grid">
-          <div class="step"><div class="step-num">1</div><div class="step-text">Stay calm. Time the seizure now.</div></div>
-          <div class="step"><div class="step-num">2</div><div class="step-text">Roll on LEFT side — keeps airway clear</div></div>
-          <div class="step"><div class="step-num">3</div><div class="step-text">Clear area — remove hard objects nearby</div></div>
-          <div class="step"><div class="step-num">4</div><div class="step-text">Stay until they are fully awake and alert</div></div>
+        <div class="step-row">
+          <div class="step-num">2</div>
+          <div class="step-text">Roll me on my <b>LEFT side</b></div>
         </div>
-      </div>
-
-      <div class="donot-box">
-        <div class="donot-title">DO NOT</div>
-        <div class="donot-items">
-          <span class="donot-item">Hold them down</span>
-          <span class="donot-item">Put anything in their mouth</span>
-          <span class="donot-item">Give water or medicine during seizure</span>
-          <span class="donot-item">Leave them alone</span>
+        <div class="step-row">
+          <div class="step-num">3</div>
+          <div class="step-text"><b>Clear</b> hard objects around me</div>
+        </div>
+        <div class="step-row">
+          <div class="step-num">4</div>
+          <div class="step-text">Stay until I am <b>fully awake</b></div>
         </div>
       </div>
 
       ${contacts.length > 0 ? `
-      <div class="section">
-        <div class="section-title">Call their emergency contacts</div>
-        ${contactRows}
-        <div style="margin-top: 8px; font-size: 11px; color: #8B95A1;">
-          ⚠ Call 911 immediately if seizure lasts more than 5 minutes
-        </div>
-      </div>` : `
-      <div style="padding: 12px; background: #FFF4F4; border-radius: 10px; text-align: center; margin-bottom: 18px;">
-        <div style="font-size: 14px; font-weight: 700; color: #C8312B; margin-bottom: 4px;">⚠ Call 911 if seizure &gt; 5 minutes</div>
-        <div style="font-size: 12px; color: #5A6470;">This person has epilepsy. Do not leave them alone.</div>
-      </div>`}
+      <div class="divider-v"></div>
+      <div class="contacts-col">
+        <div class="contacts-title">Call my family</div>
+        ${contacts.slice(0, 3).map((c) => `
+        <div class="contact-item">
+          <div class="contact-name-text">${c.nickname}</div>
+          ${c.phoneNumber
+            ? `<div class="contact-phone-text">${c.phoneNumber}</div>`
+            : `<div class="contact-push-text">app alert only</div>`
+          }
+        </div>`).join('')}
+      </div>` : ''}
     </div>
 
-    <div class="card-footer">
-      <span class="footer-app">Steady — Free epilepsy companion</span>
-      <span class="footer-meta">Generated ${now}</span>
+    <div class="donot-strip">
+      <div class="donot-label">DO NOT</div>
+      <div class="donot-item-text">Hold me down</div>
+      <div class="donot-item-text">Put anything in my mouth</div>
+      <div class="donot-item-text">Leave me alone</div>
+    </div>
+
+    <div class="back-footer">
+      <div class="back-footer-911">📞 Call 911 if seizure &gt; 5 min</div>
+      <div class="back-footer-app">Steady App</div>
     </div>
   </div>
+
 </body>
 </html>`
 
