@@ -4,10 +4,11 @@ import { View, Text, FlatList, Pressable, StyleSheet, Alert, ActivityIndicator, 
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { STEADY } from '@repo/ui'
-import { seizureLogsApi } from '@/lib/api'
+import { seizureLogsApi, contactsApi } from '@/lib/api'
 import { authStorage } from '@/lib/auth'
 import { exportNeurologistPDF } from '@/lib/pdf'
-import type { SeizureLog } from '@repo/types'
+import { exportEmergencyCard } from '@/lib/emergency-card-pdf'
+import type { SeizureLog, EmergencyContact } from '@repo/types'
 
 function formatDuration(s?: number | null) {
   if (!s) return '—'
@@ -90,9 +91,11 @@ export default function HistoryScreen() {
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [exporting, setExporting] = useState(false)
+  const [exportingCard, setExportingCard] = useState(false)
   const [tableView, setTableView] = useState(false)
   const [patientNickname, setPatientNickname] = useState('Patient')
   const [patientId, setPatientId] = useState<string | null>(null)
+  const [contacts, setContacts] = useState<EmergencyContact[]>([])
 
   const loadLogs = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true)
@@ -106,6 +109,7 @@ export default function HistoryScreen() {
       .then(setLogs)
       .catch(() => setLogs([]))
       .finally(() => { setLoading(false); setRefreshing(false) })
+    contactsApi.list().then(setContacts).catch(() => {})
   }, [])
 
   useFocusEffect(
@@ -140,6 +144,25 @@ export default function HistoryScreen() {
         <View style={s.headerActions}>
           <Pressable style={s.viewToggleBtn} onPress={() => router.push('/vitals' as any)}>
             <Ionicons name="heart-outline" size={15} color={STEADY.accent.deep} />
+          </Pressable>
+          <Pressable
+            style={[s.viewToggleBtn, exportingCard && s.exportBtnDisabled]}
+            disabled={exportingCard}
+            onPress={async () => {
+              setExportingCard(true)
+              try {
+                await exportEmergencyCard(patientNickname, logs, contacts)
+              } catch {
+                Alert.alert('Error', 'Could not generate emergency card.')
+              } finally {
+                setExportingCard(false)
+              }
+            }}
+          >
+            {exportingCard
+              ? <ActivityIndicator size="small" color={STEADY.emergency.base} />
+              : <Ionicons name="id-card-outline" size={15} color={STEADY.emergency.base} />
+            }
           </Pressable>
           <Pressable style={s.viewToggleBtn} onPress={() => setTableView((v) => !v)}>
             <Ionicons name={tableView ? 'list-outline' : 'grid-outline'} size={15} color={STEADY.accent.deep} />

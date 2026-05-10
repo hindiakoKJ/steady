@@ -13,6 +13,7 @@ import { fetchCurrentWeatherWithReason, getCurrentLocation } from '@/hooks/useWe
 import { useAccelerometer } from '@/hooks/useAccelerometer'
 import { seizureLogsApi, contactsApi } from '@/lib/api'
 import { authStorage } from '@/lib/auth'
+import { exportEmergencyCard } from '@/lib/emergency-card-pdf'
 import type { Patient, EmergencyContact } from '@repo/types'
 import * as ExpoSms from 'expo-sms'
 import { SMS_BEACON_KEY } from '@/app/(tabs)/settings'
@@ -465,17 +466,43 @@ export default function EmergencyHub() {
         </Pressable>
       </View>
 
-      {/* Bystander mode */}
-      <Pressable
-        style={s.bystanderBtn}
-        onPress={() => router.push('/bystander')}
-        accessibilityLabel="Open Bystander Mode"
-        accessibilityHint="First aid guide, no sign-in needed"
-        accessibilityRole="button"
-      >
-        <Text style={s.bystanderLabel}>👥 Bystander Mode</Text>
-        <Text style={s.bystanderSub}>First-aid guide — no sign-in needed</Text>
-      </Pressable>
+      {/* Bottom quick-access row */}
+      <View style={s.quickRow}>
+        <Pressable
+          style={[s.quickBtn, { flex: 1 }]}
+          onPress={() => router.push('/bystander')}
+          accessibilityLabel="Open Bystander Mode"
+          accessibilityRole="button"
+        >
+          <Ionicons name="people-outline" size={16} color={STEADY.ink.onDarkSec} />
+          <Text style={s.quickLabel}>Bystander Mode</Text>
+        </Pressable>
+
+        <View style={s.quickDivider} />
+
+        <Pressable
+          style={[s.quickBtn, { flex: 1 }]}
+          onPress={async () => {
+            try {
+              const patient = await authStorage.getCurrentPatient()
+              const [logs, contacts] = await Promise.all([
+                patient?.id
+                  ? seizureLogsApi.list(patient.id).catch(() => [])
+                  : Promise.resolve([]),
+                contactsApi.list().catch(() => []),
+              ])
+              await exportEmergencyCard(patient?.nickname ?? 'Patient', logs, contacts)
+            } catch {
+              Alert.alert('Error', 'Could not generate emergency card.')
+            }
+          }}
+          accessibilityLabel="Print Emergency ID Card"
+          accessibilityRole="button"
+        >
+          <Ionicons name="id-card-outline" size={16} color={STEADY.emergency.base} />
+          <Text style={[s.quickLabel, { color: STEADY.emergency.base }]}>Emergency ID Card</Text>
+        </Pressable>
+      </View>
     </SafeAreaView>
   )
 }
@@ -540,14 +567,18 @@ const s = StyleSheet.create({
   actionCardEyebrow:    { fontSize: 9, fontWeight: '700', letterSpacing: 1.6, color: STEADY.ink.onDarkTer },
   actionCardTitle:      { fontSize: 16, fontWeight: '700', color: STEADY.ink.onDark, marginTop: 2 },
   actionCardSub:        { fontSize: 11, color: STEADY.ink.onDarkSec },
-  bystanderBtn:         {
+  quickRow:             {
+    flexDirection: 'row', alignItems: 'center',
     marginHorizontal: 20, marginBottom: 8,
-    paddingVertical: 14, paddingHorizontal: 20,
     borderRadius: STEADY.r.lg, borderWidth: 1, borderColor: STEADY.border.dark,
-    alignItems: 'center', gap: 4,
+    overflow: 'hidden',
   },
-  bystanderLabel:       { fontSize: 14, fontWeight: '600', color: STEADY.ink.onDarkSec },
-  bystanderSub:         { fontSize: 11, color: STEADY.ink.onDarkTer },
+  quickBtn:             {
+    paddingVertical: 12, paddingHorizontal: 14,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+  },
+  quickLabel:           { fontSize: 13, fontWeight: '600', color: STEADY.ink.onDarkSec },
+  quickDivider:         { width: 1, height: 36, backgroundColor: STEADY.border.dark },
 
   // ── SMS Countdown Modal ──────────────────────────────────────────────────────
   modalOverlay:         {
