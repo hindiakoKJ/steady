@@ -20,6 +20,7 @@
     "typescript": "^5.7.2"
   },
   "dependencies": {
-    "@expo/server": "^0.7.5"
+    "@expo/server": "^0.7.5",
+    "puppeteer": "^24.43.0"
   }
 }

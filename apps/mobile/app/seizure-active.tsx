@@ -155,8 +155,7 @@ export default function SeizureActive() {
       const phoneContacts = contacts.filter((c) => c.phoneNumber)
       if (smsOn && smsAvailable && phoneContacts.length > 0) {
         const patient = await authStorage.getCurrentPatient()
-        const locationText = w ? ` Location: https://maps.google.com/?q=${w.lat},${w.lon}` : ''
-        const message = `STEADY ALERT: ${patient?.nickname ?? 'Your contact'} is having a seizure (5+ minutes — status epilepticus risk).${locationText}`
+        const message = `STEADY: ${patient?.nickname ?? 'Your contact'} has been seizing for 5+ minutes. Call emergency services now.`
         await ExpoSms.sendSMSAsync(phoneContacts.map((c) => c.phoneNumber!), message)
       }
     } catch { /* silent — don't interrupt the caregiver */ }

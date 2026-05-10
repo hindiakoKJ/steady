@@ -100,7 +100,7 @@ export default function EmergencyHub() {
       const phoneContacts = preview.contacts.filter((c) => c.phoneNumber)
       const pushContacts  = preview.contacts.filter((c) => c.pushToken)
 
-      // SMS — open pre-filled composer if user has SMS enabled and there are phone contacts
+      // SMS — open pre-filled composer (Android requires manual send tap)
       const smsStored = await AsyncStorage.getItem(SMS_BEACON_KEY)
       const smsOn = smsStored === null ? true : smsStored === 'true'
       const smsAvailable = await ExpoSms.isAvailableAsync()
@@ -259,13 +259,12 @@ export default function EmergencyHub() {
         await AsyncStorage.setItem('@steady/activeSeizureLogId', log.id)
       }
 
-      const locationText = location
-        ? ` Location: https://maps.google.com/?q=${location.lat},${location.lon}`
-        : ''
+      // No URL in SMS — Philippine carriers (Globe/Smart) silently block
+      // messages containing links. Location is sent via push notification instead.
       const nickname = currentPatient?.nickname ?? 'Your contact'
-      const message = `STEADY ALERT: ${nickname} may be having a seizure.${locationText}`
+      const message = `STEADY: ${nickname} may be having a seizure. Please call or go to them now.`
 
-      // Show countdown then auto-send; navigate to seizure-active if new log
+      // Show countdown then open SMS composer; navigate to seizure-active if new log
       startCountdown({
         contacts,
         message,

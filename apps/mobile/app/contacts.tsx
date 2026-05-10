@@ -5,8 +5,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { STEADY } from '@repo/ui'
-import { contactsApi } from '@/lib/api'
+import { contactsApi, notificationsApi } from '@/lib/api'
+import { PUSH_TOKEN_KEY } from '@/app/(tabs)/_layout'
 import type { EmergencyContact } from '@repo/types'
 
 export default function ContactsScreen() {
@@ -49,6 +51,33 @@ export default function ContactsScreen() {
     } finally {
       setSaving(false)
     }
+  }
+
+  const handleLinkDevice = async (contact: EmergencyContact) => {
+    const token = await AsyncStorage.getItem(PUSH_TOKEN_KEY)
+    if (!token) {
+      Alert.alert('Push not available', 'This device has not been granted push notification permission. Check Settings → Notifications.')
+      return
+    }
+    Alert.alert(
+      `Link this device to ${contact.nickname}?`,
+      'This device will receive push alerts when BEACON is fired for this household.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Link',
+          onPress: async () => {
+            try {
+              await notificationsApi.registerToken(token, contact.id)
+              Alert.alert('Linked ✓', `This device will now receive BEACON push alerts as ${contact.nickname}.`)
+              await load()
+            } catch {
+              Alert.alert('Error', 'Could not link device. Please try again.')
+            }
+          },
+        },
+      ]
+    )
   }
 
   const handleDelete = (contact: EmergencyContact) => {
@@ -122,6 +151,15 @@ export default function ContactsScreen() {
                         <Text style={s.contactPhone}>{c.phoneNumber}</Text>
                       </View>
                     : <Text style={s.contactPhoneMissing}>Push only — no phone number</Text>
+                  }
+                  {c.pushToken
+                    ? <View style={s.phoneRow}>
+                        <Ionicons name="notifications-circle-outline" size={11} color={STEADY.accent.base} />
+                        <Text style={[s.contactPhone, { color: STEADY.accent.base }]}>Push linked ✓</Text>
+                      </View>
+                    : <Pressable onPress={() => handleLinkDevice(c)} hitSlop={8}>
+                        <Text style={s.linkDeviceText}>+ Link a device for push alerts</Text>
+                      </Pressable>
                   }
                 </View>
                 <Pressable style={s.deleteBtn} onPress={() => handleDelete(c)} hitSlop={8}>
@@ -206,6 +244,7 @@ const s = StyleSheet.create({
   phoneRow:         { flexDirection: 'row', alignItems: 'center', gap: 4 },
   contactPhone:     { fontSize: 12, color: STEADY.ink.secondary },
   contactPhoneMissing: { fontSize: 12, color: STEADY.ink.tertiary, fontStyle: 'italic' },
+  linkDeviceText:      { fontSize: 11, color: STEADY.accent.base, fontWeight: '600', marginTop: 2 },
   deleteBtn:        { width: 30, height: 30, borderRadius: 15, backgroundColor: STEADY.emergency.soft, alignItems: 'center', justifyContent: 'center' },
   addCard:          { backgroundColor: '#fff', borderRadius: STEADY.r.lg, padding: 16, borderWidth: 1, borderColor: STEADY.border.light, gap: 14, marginBottom: 16 },
   addCardTitle:     { fontSize: 15, fontWeight: '700', color: STEADY.ink.primary },

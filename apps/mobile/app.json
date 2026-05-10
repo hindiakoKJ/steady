@@ -46,6 +46,14 @@
       "expo-router",
       "expo-sensors",
       [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/icon.png",
+          "color": "#5B5BD6",
+          "sounds": []
+        }
+      ],
+      [
         "expo-location",
         {
           "locationWhenInUsePermission": "Allow Steady to use your location to record weather and send your position to family during a seizure."
@@ -65,14 +73,14 @@
     "experiments": {
       "typedRoutes": true
     },
+    "owner": "hindiakokj1",
     "extra": {
       "router": {
         "origin": false
       },
       "eas": {
-        "projectId": "a7f4904c-6cac-4f6e-85fd-74263656632a"
+        "projectId": "474071af-a82b-4d86-8e8b-b0e2c080db77"
       }
-    },
-    "owner": "hindiakokj2"
+    }
   }
 }
