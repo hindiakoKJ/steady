@@ -13,7 +13,7 @@ import { fetchCurrentWeatherWithReason, getCurrentLocation } from '@/hooks/useWe
 import { useAccelerometer } from '@/hooks/useAccelerometer'
 import { seizureLogsApi, contactsApi } from '@/lib/api'
 import { authStorage } from '@/lib/auth'
-import { exportEmergencyCard } from '@/lib/emergency-card-pdf'
+
 import type { Patient, EmergencyContact } from '@repo/types'
 import * as ExpoSms from 'expo-sms'
 import { SMS_BEACON_KEY } from '@/app/(tabs)/settings'
@@ -482,21 +482,8 @@ export default function EmergencyHub() {
 
         <Pressable
           style={[s.quickBtn, { flex: 1 }]}
-          onPress={async () => {
-            try {
-              const patient = await authStorage.getCurrentPatient()
-              const [logs, contacts] = await Promise.all([
-                patient?.id
-                  ? seizureLogsApi.list(patient.id).catch(() => [])
-                  : Promise.resolve([]),
-                contactsApi.list().catch(() => []),
-              ])
-              await exportEmergencyCard(patient?.nickname ?? 'Patient', logs, contacts)
-            } catch {
-              Alert.alert('Error', 'Could not generate emergency card.')
-            }
-          }}
-          accessibilityLabel="Print Emergency ID Card"
+          onPress={() => router.push('/emergency-id' as any)}
+          accessibilityLabel="View Emergency ID Card"
           accessibilityRole="button"
         >
           <Ionicons name="id-card-outline" size={16} color={STEADY.emergency.base} />

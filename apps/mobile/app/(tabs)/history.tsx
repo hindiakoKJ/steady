@@ -7,7 +7,6 @@ import { STEADY } from '@repo/ui'
 import { seizureLogsApi, contactsApi } from '@/lib/api'
 import { authStorage } from '@/lib/auth'
 import { exportNeurologistPDF } from '@/lib/pdf'
-import { exportEmergencyCard } from '@/lib/emergency-card-pdf'
 import type { SeizureLog, EmergencyContact } from '@repo/types'
 
 function formatDuration(s?: number | null) {
@@ -146,23 +145,10 @@ export default function HistoryScreen() {
             <Ionicons name="heart-outline" size={15} color={STEADY.accent.deep} />
           </Pressable>
           <Pressable
-            style={[s.viewToggleBtn, exportingCard && s.exportBtnDisabled]}
-            disabled={exportingCard}
-            onPress={async () => {
-              setExportingCard(true)
-              try {
-                await exportEmergencyCard(patientNickname, logs, contacts)
-              } catch {
-                Alert.alert('Error', 'Could not generate emergency card.')
-              } finally {
-                setExportingCard(false)
-              }
-            }}
+            style={s.viewToggleBtn}
+            onPress={() => router.push('/emergency-id' as any)}
           >
-            {exportingCard
-              ? <ActivityIndicator size="small" color={STEADY.emergency.base} />
-              : <Ionicons name="id-card-outline" size={15} color={STEADY.emergency.base} />
-            }
+            <Ionicons name="id-card-outline" size={15} color={STEADY.emergency.base} />
           </Pressable>
           <Pressable style={s.viewToggleBtn} onPress={() => setTableView((v) => !v)}>
             <Ionicons name={tableView ? 'list-outline' : 'grid-outline'} size={15} color={STEADY.accent.deep} />
