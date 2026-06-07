@@ -20,6 +20,10 @@ const copy = {
     ],
     signupNote: 'Sign up with just an email and a nickname. That\'s all we need.',
     architectureNote: '🔒 Technical guarantee: Every database query is isolated by a HouseholdID. It is architecturally impossible for one family\'s data to be accessed by another.',
+    retentionHeading: 'Data Retention',
+    retentionText: 'We retain your data for as long as your account is active. If you delete your account, all associated data — including seizure logs, patient profiles, and emergency contacts — is permanently deleted from our servers within 30 days.',
+    deletionHeading: 'How to Delete Your Data',
+    deletionText: 'You can request full deletion of your account and all data at any time by emailing us at kristianjvsacdalan@gmail.com with the subject "Delete My Account". We will process your request within 7 business days and confirm once complete. You may also delete individual seizure logs directly from within the app.',
   },
   tl: {
     heading: 'Ang Aming Pangako sa Privacy',
@@ -38,6 +42,10 @@ const copy = {
     ],
     signupNote: 'Mag-sign up gamit lang ang email at palayaw. Iyon lang ang kailangan namin.',
     architectureNote: '🔒 Teknikal na garantiya: Bawat query sa database ay nakabukod sa pamamagitan ng HouseholdID. Imposible sa arkitektura na ma-access ng isang pamilya ang datos ng iba.',
+    retentionHeading: 'Panahon ng Pag-iingat ng Data',
+    retentionText: 'Iniiingat namin ang iyong data habang aktibo ang iyong account. Kung ide-delete mo ang iyong account, lahat ng nauugnay na data — kabilang ang mga seizure log, profile ng pasyente, at emergency contacts — ay permanenteng mabubura mula sa aming mga server sa loob ng 30 araw.',
+    deletionHeading: 'Paano Burahin ang Iyong Data',
+    deletionText: 'Maaari kang humiling ng kumpletong pagbura ng iyong account at lahat ng data anumang oras sa pamamagitan ng pagpapadala ng email sa kristianjvsacdalan@gmail.com na may subject na "Delete My Account". Ipoproseso namin ang iyong kahilingan sa loob ng 7 araw ng negosyo at magpapadala ng kumpirmasyon. Maaari ka ring mag-delete ng mga indibidwal na seizure log direkta mula sa loob ng app.',
   },
 }
 
@@ -90,6 +98,18 @@ export function PrivacyPromise({ lang }: { lang: Lang }) {
 
         {/* Architecture note */}
         <p className="text-slate-400 text-xs leading-relaxed text-center">{t.architectureNote}</p>
+
+        {/* Data Retention */}
+        <div className="mt-8 border-t border-slate-700 pt-8">
+          <h3 className="text-slate-200 font-semibold mb-2">📅 {t.retentionHeading}</h3>
+          <p className="text-slate-400 text-sm leading-relaxed">{t.retentionText}</p>
+        </div>
+
+        {/* Data Deletion */}
+        <div className="mt-6">
+          <h3 className="text-slate-200 font-semibold mb-2">🗑️ {t.deletionHeading}</h3>
+          <p className="text-slate-400 text-sm leading-relaxed">{t.deletionText}</p>
+        </div>
       </div>
     </section>
   )

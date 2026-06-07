@@ -6,6 +6,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev", "--workspace=apps/landing"],
       "port": 3000
+    },
+    {
+      "name": "promo",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "promo", "-p", "4200", "--no-clipboard"],
+      "port": 4200
     }
   ]
 }

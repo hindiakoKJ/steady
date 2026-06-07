@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"/>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #111; display: flex; flex-wrap: wrap; gap: 20px; padding: 20px; }
+
+/* Each slide: 1080×1920 scaled to 360×640 for preview */
+.slide {
+  width: 360px;
+  height: 640px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+/* ── Decorative background zigzags ── */
+.deco {
+  position: absolute;
+  width: 100%; height: 100%;
+  top: 0; left: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.deco-shape {
+  position: absolute;
+  width: 120px; height: 60px;
+  border: 8px solid rgba(255,255,255,0.15);
+  border-bottom: none;
+  border-radius: 0;
+}
+
+/* ── Headline ── */
+.headline {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  padding: 36px 28px 0;
+  z-index: 10;
+}
+.headline h1 {
+  font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.5px;
+}
+.headline p {
+  font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  margin-top: 8px;
+  line-height: 1.5;
+  opacity: 0.85;
+}
+
+/* ── Phone frame ── */
+.phone-wrap {
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 230px;
+  z-index: 20;
+}
+.phone {
+  width: 230px;
+  background: #0a0a0a;
+  border-radius: 36px;
+  padding: 10px;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.08);
+  position: relative;
+}
+.phone-notch {
+  width: 80px; height: 22px;
+  background: #0a0a0a;
+  border-radius: 0 0 16px 16px;
+  margin: 0 auto 6px;
+  position: relative; z-index: 2;
+}
+.phone-screen {
+  background: #fff;
+  border-radius: 28px;
+  overflow: hidden;
+  min-height: 380px;
+}
+
+/* ── Screen content ── */
+.screen-dark { background: #1A1F24; }
+.screen-light { background: #F4F1EC; }
+
+/* Shared nav bar */
+.nav-bar {
+  padding: 10px 14px 6px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.nav-title { font-size: 12px; font-weight: 700; color: #fff; }
+.nav-title-dark { color: #1A1F24; }
+
+/* ─────────────────────────────────────────── */
+/* SLIDE 1: Emergency Hub                       */
+/* ─────────────────────────────────────────── */
+.s1-bg { background: #1A1F24; }
+
+.s1-screen {
+  background: #1A1F24;
+  padding: 10px 12px 14px;
+  min-height: 380px;
+}
+.s1-eyebrow { font-size: 8px; color: rgba(255,255,255,0.4); letter-spacing: 1.2px; font-weight: 700; text-align: center; padding-top: 4px; font-family: sans-serif; }
+.s1-patient { font-size: 10px; color: rgba(255,255,255,0.9); font-weight: 700; text-align: center; margin: 2px 0 10px; font-family: sans-serif; }
+.s1-aura-btn {
+  width: 110px; height: 110px;
+  border-radius: 55px;
+  background: #C8312B;
+  margin: 0 auto 8px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  box-shadow: 0 0 0 8px rgba(200,49,43,0.15), 0 0 0 16px rgba(200,49,43,0.08);
+}
+.s1-aura-icon { font-size: 28px; }
+.s1-aura-label { font-size: 8px; color: #fff; font-weight: 800; letter-spacing: 1px; margin-top: 2px; font-family: sans-serif; }
+.s1-sub { font-size: 8px; color: rgba(255,255,255,0.4); text-align: center; margin-bottom: 10px; font-family: sans-serif; }
+.s1-btn-row { display: flex; gap: 6px; margin-bottom: 8px; }
+.s1-btn {
+  flex: 1; padding: 8px 6px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.04);
+  text-align: center;
+}
+.s1-btn-icon { font-size: 14px; }
+.s1-btn-label { font-size: 7.5px; font-weight: 700; color: #fff; font-family: sans-serif; margin-top: 2px; }
+.s1-btn-sub { font-size: 6.5px; color: rgba(255,255,255,0.4); font-family: sans-serif; }
+.s1-beacon-btn {
+  background: rgba(216,136,32,0.15);
+  border-color: rgba(216,136,32,0.3);
+}
+
+/* ─────────────────────────────────────────── */
+/* SLIDE 2: BEACON Alert                        */
+/* ─────────────────────────────────────────── */
+.s2-bg { background: linear-gradient(160deg, #2D0A09 0%, #1A0505 100%); }
+
+.s2-screen {
+  background: #1A1F24;
+  padding: 10px 12px 14px;
+  min-height: 380px;
+}
+.s2-banner {
+  background: rgba(200,49,43,0.15);
+  border: 1px solid rgba(200,49,43,0.4);
+  border-radius: 8px; padding: 6px 10px;
+  display: flex; align-items: center; gap: 6px; margin-bottom: 8px;
+}
+.s2-dot { width: 6px; height: 6px; border-radius: 3px; background: #C8312B; }
+.s2-banner-text { font-size: 8px; font-weight: 700; color: #fff; font-family: sans-serif; }
+.s2-timer { text-align: center; margin: 4px 0; }
+.s2-timer-num { font-size: 40px; font-weight: 800; color: #fff; letter-spacing: -1px; font-family: sans-serif; line-height: 1; }
+.s2-timer-label { font-size: 7.5px; color: rgba(255,255,255,0.5); font-family: sans-serif; margin-top: 2px; }
+.s2-steps { margin: 8px 0; }
+.s2-step { display: flex; align-items: flex-start; gap: 6px; margin-bottom: 4px; }
+.s2-step-num {
+  width: 14px; height: 14px; border-radius: 7px;
+  background: #2E7D7A;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 7px; font-weight: 800; color: #fff; font-family: sans-serif;
+  flex-shrink: 0;
+}
+.s2-step-text { font-size: 7.5px; color: rgba(255,255,255,0.8); font-family: sans-serif; line-height: 1.4; }
+.s2-notified { font-size: 7.5px; color: #2E7D7A; font-weight: 600; font-family: sans-serif; margin: 4px 0 8px; }
+.s2-end-btn {
+  background: rgba(255,255,255,0.08);
+  border: 1.5px solid rgba(255,255,255,0.15);
+  border-radius: 12px; padding: 8px;
+  text-align: center;
+}
+.s2-end-text { font-size: 9px; font-weight: 700; color: #fff; font-family: sans-serif; }
+.s2-beacon-btn {
+  background: rgba(200,49,43,0.8);
+  border-radius: 12px; padding: 8px; margin-bottom: 6px;
+  text-align: center;
+}
+.s2-beacon-text { font-size: 9px; font-weight: 800; color: #fff; font-family: sans-serif; }
+
+/* ─────────────────────────────────────────── */
+/* SLIDE 3: Emergency QR                        */
+/* ─────────────────────────────────────────── */
+.s3-bg { background: #2E7D7A; }
+
+.s3-screen {
+  background: #F4F1EC;
+  padding: 10px 12px 14px;
+  min-height: 380px;
+}
+.s3-privacy {
+  background: rgba(46,125,122,0.15);
+  border: 1px solid rgba(46,125,122,0.3);
+  border-radius: 8px; padding: 5px 8px;
+  font-size: 7px; color: #2E5957; font-family: sans-serif; margin-bottom: 8px; line-height: 1.4;
+}
+.s3-card {
+  background: #fff; border-radius: 14px; padding: 10px;
+  border: 1px solid #EDE8E0;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+.s3-eyebrow { font-size: 7px; font-weight: 800; color: #C8312B; letter-spacing: 1.2px; font-family: sans-serif; margin-bottom: 3px; }
+.s3-name { font-size: 12px; font-weight: 800; color: #1A1F24; font-family: sans-serif; }
+.s3-sub { font-size: 7px; color: #8B95A1; font-family: sans-serif; margin-bottom: 8px; }
+.s3-qr-box {
+  width: 80px; height: 80px; margin: 0 auto 8px;
+  background: #fff; border: 1px solid #EDE8E0; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+}
+.s3-qr-inner {
+  width: 64px; height: 64px;
+  background:
+    repeating-linear-gradient(0deg, #1A1F24 0px, #1A1F24 4px, transparent 4px, transparent 8px),
+    repeating-linear-gradient(90deg, #1A1F24 0px, #1A1F24 4px, transparent 4px, transparent 8px);
+  background-size: 8px 8px;
+  border-radius: 4px;
+  position: relative;
+}
+.s3-qr-corner {
+  position: absolute;
+  width: 18px; height: 18px;
+  background: #fff; border-radius: 3px;
+}
+.s3-qr-corner::after {
+  content: '';
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 12px; height: 12px;
+  border: 2.5px solid #1A1F24;
+  border-radius: 2px;
+}
+.s3-preview {
+  background: #F8F5F0; border-radius: 6px; padding: 5px 7px;
+  font-size: 6.5px; color: #5A6470; font-family: monospace; line-height: 1.5;
+}
+
+/* ─────────────────────────────────────────── */
+/* SLIDE 4: History & Reports                   */
+/* ─────────────────────────────────────────── */
+.s4-bg { background: #F4F1EC; }
+
+.s4-screen {
+  background: #F4F1EC;
+  padding: 10px 12px 14px;
+  min-height: 380px;
+}
+.s4-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+.s4-title { font-size: 14px; font-weight: 800; color: #1A1F24; font-family: sans-serif; }
+.s4-export { font-size: 7px; font-weight: 700; color: #2E5957; font-family: sans-serif; background: #fff; border: 1px solid #EDE8E0; padding: 3px 7px; border-radius: 20px; }
+.s4-stats { display: flex; gap: 5px; margin-bottom: 8px; }
+.s4-stat { flex: 1; background: #fff; border-radius: 10px; border: 1px solid #EDE8E0; padding: 6px 4px; text-align: center; }
+.s4-stat-num { font-size: 14px; font-weight: 800; font-family: sans-serif; }
+.s4-stat-label { font-size: 6.5px; color: #8B95A1; font-family: sans-serif; margin-top: 1px; }
+.s4-card { background: #fff; border-radius: 10px; border: 1px solid #EDE8E0; padding: 8px 10px; display: flex; gap: 8px; margin-bottom: 5px; }
+.s4-date-col { text-align: center; width: 28px; }
+.s4-month { font-size: 7px; color: #8B95A1; font-weight: 700; font-family: sans-serif; }
+.s4-day { font-size: 16px; font-weight: 800; color: #1A1F24; font-family: sans-serif; line-height: 1; }
+.s4-div { width: 1px; background: #EDE8E0; }
+.s4-body { flex: 1; }
+.s4-type-row { display: flex; align-items: center; gap: 4px; }
+.s4-type { font-size: 8px; font-weight: 700; color: #1A1F24; font-family: sans-serif; }
+.s4-dur { font-size: 7px; font-weight: 700; color: #D88820; background: #FFF8ED; padding: 1px 5px; border-radius: 5px; font-family: sans-serif; }
+.s4-danger { color: #C8312B; background: #FFF0EF; }
+.s4-meta { font-size: 7px; color: #8B95A1; margin-top: 2px; font-family: sans-serif; }
+.s4-trigger { font-size: 6.5px; color: #8B95A1; margin-top: 1px; font-style: italic; font-family: sans-serif; }
+
+/* ─────────────────────────────────────────── */
+/* SLIDE 5: Nearby Doctors Map                  */
+/* ─────────────────────────────────────────── */
+.s5-bg { background: #2E7D7A; }
+
+.s5-screen {
+  background: #F4F1EC;
+  padding: 10px 12px 14px;
+  min-height: 380px;
+}
+.s5-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.s5-icon { width: 30px; height: 30px; border-radius: 15px; background: rgba(46,125,122,0.15); display: flex; align-items: center; justify-content: center; font-size: 14px; }
+.s5-title { font-size: 14px; font-weight: 800; color: #1A1F24; font-family: sans-serif; }
+.s5-map {
+  border-radius: 14px; overflow: hidden;
+  background: #e8f4f3;
+  height: 180px;
+  position: relative;
+  margin-bottom: 8px;
+}
+.s5-map-bg {
+  width: 100%; height: 100%;
+  background:
+    linear-gradient(rgba(200,230,228,0.3) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(200,230,228,0.3) 1px, transparent 1px);
+  background-size: 20px 20px;
+  background-color: #d4ece9;
+}
+/* Road simulation */
+.s5-road-h { position: absolute; height: 6px; background: rgba(255,255,255,0.7); left: 0; right: 0; }
+.s5-road-v { position: absolute; width: 6px; background: rgba(255,255,255,0.7); top: 0; bottom: 0; }
+.s5-pin {
+  position: absolute;
+  width: 28px; height: 32px;
+}
+.s5-pin-circle {
+  width: 22px; height: 22px; border-radius: 11px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+.s5-pin-tail { width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; margin: 0 auto; }
+.s5-map-card {
+  position: absolute; bottom: 6px; left: 6px; right: 6px;
+  background: #fff; border-radius: 10px; padding: 7px 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.s5-card-name { font-size: 8px; font-weight: 700; color: #1A1F24; font-family: sans-serif; }
+.s5-card-addr { font-size: 6.5px; color: #8B95A1; font-family: sans-serif; margin-top: 1px; }
+.s5-dir-btn { background: #2E7D7A; padding: 4px 8px; border-radius: 6px; font-size: 7px; font-weight: 700; color: #fff; font-family: sans-serif; }
+.s5-pill-row { display: flex; gap: 5px; flex-wrap: wrap; }
+.s5-pill { padding: 3px 8px; border-radius: 20px; font-size: 7px; font-weight: 600; font-family: sans-serif; }
+
+/* ─────────────────────────────────────────── */
+/* SLIDE 6: Privacy Promise                     */
+/* ─────────────────────────────────────────── */
+.s6-bg { background: #1A1F24; }
+
+.s6-screen {
+  background: #F4F1EC;
+  padding: 10px 12px 14px;
+  min-height: 380px;
+}
+.s6-profile { display: flex; align-items: center; gap: 8px; background: #fff; border-radius: 12px; padding: 8px; border: 1px solid #EDE8E0; margin-bottom: 8px; }
+.s6-avatar { width: 38px; height: 38px; border-radius: 19px; background: rgba(46,125,122,0.15); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800; color: #2E5957; font-family: sans-serif; }
+.s6-name { font-size: 11px; font-weight: 700; color: #1A1F24; font-family: sans-serif; }
+.s6-meta { font-size: 7.5px; color: #8B95A1; font-family: sans-serif; }
+.s6-privacy {
+  background: rgba(46,125,122,0.06);
+  border: 1px solid rgba(46,125,122,0.2);
+  border-radius: 12px; padding: 10px;
+  margin-bottom: 8px;
+}
+.s6-privacy-title { font-size: 8px; font-weight: 800; color: #2E5957; letter-spacing: 1px; font-family: sans-serif; margin-bottom: 6px; }
+.s6-privacy-quote { font-size: 9px; color: #3A4550; font-style: italic; line-height: 1.5; font-family: sans-serif; margin-bottom: 8px; }
+.s6-privacy-point { font-size: 8px; color: #2E5957; font-weight: 600; font-family: sans-serif; margin-bottom: 3px; }
+.s6-free {
+  background: #1A1F24; border-radius: 12px; padding: 10px;
+  text-align: center;
+}
+.s6-free-main { font-size: 16px; font-weight: 800; color: #fff; font-family: sans-serif; }
+.s6-free-sub { font-size: 8px; color: rgba(255,255,255,0.5); font-family: sans-serif; margin-top: 3px; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- SLIDE 1: Emergency Hub                      -->
+<!-- ══════════════════════════════════════════ -->
+<div class="slide s1-bg">
+  <!-- Decorative shapes -->
+  <div class="deco">
+    <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+      <!-- Top-left zigzag -->
+      <polyline points="0,90 50,90 50,40 100,40" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="6" stroke-linecap="square"/>
+      <polyline points="0,120 30,120 30,70 80,70" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="6" stroke-linecap="square"/>
+      <!-- Bottom-right zigzag -->
+      <polyline points="360,520 310,520 310,570 260,570" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="6" stroke-linecap="square"/>
+      <polyline points="360,550 330,550 330,600 280,600" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="6" stroke-linecap="square"/>
+    </svg>
+  </div>
+
+  <!-- Headline -->
+  <div class="headline">
+    <h1 style="color:#fff;">Epilepsy Safety.<br>For Every Family.</h1>
+    <p style="color:rgba(255,255,255,0.6);">Log seizures · Alert family · Guide bystanders</p>
+  </div>
+
+  <!-- Phone -->
+  <div class="phone-wrap" style="bottom:-10px;">
+    <div class="phone">
+      <div class="phone-notch"></div>
+      <div class="phone-screen s1-screen">
+        <div class="s1-eyebrow">EMERGENCY HUB</div>
+        <div class="s1-patient">Mia · Active patient</div>
+
+        <div class="s1-aura-btn">
+          <div class="s1-aura-icon">🚨</div>
+          <div class="s1-aura-label">HELP / LOG AURA</div>
+        </div>
+        <div class="s1-sub">Tap to start seizure timer &amp; log weather</div>
+
+        <div class="s1-btn-row">
+          <div class="s1-btn s1-beacon-btn">
+            <div class="s1-btn-icon">📡</div>
+            <div class="s1-btn-label">BEACON</div>
+            <div class="s1-btn-sub">Alert family now</div>
+          </div>
+          <div class="s1-btn">
+            <div class="s1-btn-icon">📳</div>
+            <div class="s1-btn-label">PASSIVE</div>
+            <div class="s1-btn-sub">Auto-detect off</div>
+          </div>
+        </div>
+
+        <div class="s1-btn-row">
+          <div class="s1-btn" style="background:rgba(46,125,122,0.08);border-color:rgba(46,125,122,0.25);">
+            <div class="s1-btn-icon">🔒</div>
+            <div class="s1-btn-label">BYSTANDER CARD</div>
+            <div class="s1-btn-sub">For strangers nearby</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Steady brand bottom -->
+  <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;z-index:30;">
+    <span style="font-size:10px;font-weight:800;color:rgba(255,255,255,0.3);font-family:sans-serif;letter-spacing:1px;">STEADY</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- SLIDE 2: Seizure Active / BEACON            -->
+<!-- ══════════════════════════════════════════ -->
+<div class="slide s2-bg">
+  <div class="deco">
+    <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+      <polyline points="0,80 50,80 50,30 100,30" fill="none" stroke="rgba(200,49,43,0.2)" stroke-width="6" stroke-linecap="square"/>
+      <polyline points="360,530 310,530 310,580 260,580" fill="none" stroke="rgba(200,49,43,0.15)" stroke-width="6" stroke-linecap="square"/>
+    </svg>
+  </div>
+
+  <div class="headline">
+    <h1 style="color:#fff;">One tap.<br>Your family<br>is alerted.</h1>
+    <p style="color:rgba(255,255,255,0.55);">SMS + push notifications sent automatically</p>
+  </div>
+
+  <div class="phone-wrap" style="bottom:-10px;">
+    <div class="phone">
+      <div class="phone-notch"></div>
+      <div class="phone-screen s2-screen">
+        <div class="s2-banner">
+          <div class="s2-dot"></div>
+          <span class="s2-banner-text">⚠ SEIZURE IN PROGRESS</span>
+        </div>
+        <div class="s2-timer">
+          <div class="s2-timer-num">2:34</div>
+          <div class="s2-timer-label">elapsed · stay calm</div>
+        </div>
+        <div class="s2-steps">
+          <div class="s2-step"><div class="s2-step-num">1</div><div class="s2-step-text">Turn on left side — keeps airway clear</div></div>
+          <div class="s2-step"><div class="s2-step-num">2</div><div class="s2-step-text">Clear area, do NOT restrain</div></div>
+          <div class="s2-step"><div class="s2-step-num">3</div><div class="s2-step-text">Nothing in their mouth</div></div>
+        </div>
+        <div class="s2-notified">✓ Mama, Papa notified via SMS &amp; app</div>
+        <div class="s2-beacon-btn">
+          <div class="s2-beacon-text">📡 BEACON — Alert Again</div>
+        </div>
+        <div class="s2-end-btn">
+          <div class="s2-end-text">Seizure has ended</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;z-index:30;">
+    <span style="font-size:10px;font-weight:800;color:rgba(255,255,255,0.3);font-family:sans-serif;letter-spacing:1px;">STEADY</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- SLIDE 3: Emergency QR                       -->
+<!-- ══════════════════════════════════════════ -->
+<div class="slide s3-bg">
+  <div class="deco">
+    <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+      <polyline points="0,80 50,80 50,30 100,30" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="6" stroke-linecap="square"/>
+      <polyline points="0,108 30,108 30,58 80,58" fill="none" stroke="rgba(255,255,255,0.10)" stroke-width="6" stroke-linecap="square"/>
+      <polyline points="360,530 310,530 310,580 260,580" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="6" stroke-linecap="square"/>
+      <polyline points="360,558 330,558 330,608 280,608" fill="none" stroke="rgba(255,255,255,0.10)" stroke-width="6" stroke-linecap="square"/>
+    </svg>
+  </div>
+
+  <div class="headline">
+    <h1 style="color:#fff;">Any bystander<br>can help.<br><span style="font-size:24px;opacity:0.85;">No app needed.</span></h1>
+    <p style="color:rgba(255,255,255,0.7);">Scan with any camera · Stays on your phone only</p>
+  </div>
+
+  <div class="phone-wrap" style="bottom:-10px;">
+    <div class="phone">
+      <div class="phone-notch"></div>
+      <div class="phone-screen s3-screen">
+        <div style="text-align:center;padding:4px 0 2px;">
+          <div style="font-size:7px;font-weight:800;color:#8B95A1;font-family:sans-serif;letter-spacing:1px;">EMERGENCY</div>
+          <div style="font-size:13px;font-weight:800;color:#1A1F24;font-family:sans-serif;">QR Card</div>
+        </div>
+        <div class="s3-privacy">🔒 Stored on this phone only — never uploaded to any server</div>
+        <div class="s3-card">
+          <div class="s3-eyebrow">STEADY EMERGENCY CARD</div>
+          <div class="s3-name">Mia</div>
+          <div class="s3-sub">Epilepsy patient · scan for first-aid instructions</div>
+          <!-- QR pattern simulation -->
+          <div class="s3-qr-box">
+            <svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+              <!-- Finder patterns -->
+              <rect x="2" y="2" width="18" height="18" fill="#1A1F24" rx="2"/>
+              <rect x="4" y="4" width="14" height="14" fill="#fff" rx="1"/>
+              <rect x="6" y="6" width="10" height="10" fill="#1A1F24" rx="1"/>
+              <rect x="44" y="2" width="18" height="18" fill="#1A1F24" rx="2"/>
+              <rect x="46" y="4" width="14" height="14" fill="#fff" rx="1"/>
+              <rect x="48" y="6" width="10" height="10" fill="#1A1F24" rx="1"/>
+              <rect x="2" y="44" width="18" height="18" fill="#1A1F24" rx="2"/>
+              <rect x="4" y="46" width="14" height="14" fill="#fff" rx="1"/>
+              <rect x="6" y="48" width="10" height="10" fill="#1A1F24" rx="1"/>
+              <!-- Data modules (randomized look) -->
+              <rect x="24" y="2" width="4" height="4" fill="#1A1F24"/>
+              <rect x="30" y="2" width="4" height="4" fill="#1A1F24"/>
+              <rect x="36" y="2" width="4" height="4" fill="#1A1F24"/>
+              <rect x="24" y="8" width="4" height="4" fill="#1A1F24"/>
+              <rect x="36" y="8" width="4" height="4" fill="#1A1F24"/>
+              <rect x="24" y="14" width="4" height="4" fill="#1A1F24"/>
+              <rect x="30" y="14" width="4" height="4" fill="#1A1F24"/>
+              <rect x="2" y="24" width="4" height="4" fill="#1A1F24"/>
+              <rect x="8" y="24" width="4" height="4" fill="#1A1F24"/>
+              <rect x="2" y="30" width="4" height="4" fill="#1A1F24"/>
+              <rect x="14" y="30" width="4" height="4" fill="#1A1F24"/>
+              <rect x="2" y="36" width="4" height="4" fill="#1A1F24"/>
+              <rect x="8" y="36" width="4" height="4" fill="#1A1F24"/>
+              <rect x="24" y="24" width="4" height="4" fill="#1A1F24"/>
+              <rect x="32" y="24" width="4" height="4" fill="#1A1F24"/>
+              <rect x="40" y="24" width="4" height="4" fill="#1A1F24"/>
+              <rect x="48" y="24" width="4" height="4" fill="#1A1F24"/>
+              <rect x="56" y="24" width="4" height="4" fill="#1A1F24"/>
+              <rect x="24" y="30" width="4" height="4" fill="#1A1F24"/>
+              <rect x="28" y="32" width="8" height="8" fill="#1A1F24" rx="1"/>
+              <rect x="40" y="30" width="4" height="4" fill="#1A1F24"/>
+              <rect x="56" y="30" width="4" height="4" fill="#1A1F24"/>
+              <rect x="24" y="38" width="4" height="4" fill="#1A1F24"/>
+              <rect x="32" y="38" width="4" height="4" fill="#1A1F24"/>
+              <rect x="48" y="38" width="4" height="4" fill="#1A1F24"/>
+              <rect x="44" y="44" width="4" height="4" fill="#1A1F24"/>
+              <rect x="52" y="44" width="4" height="4" fill="#1A1F24"/>
+              <rect x="60" y="44" width="4" height="4" fill="#1A1F24"/>
+              <rect x="24" y="44" width="4" height="4" fill="#1A1F24"/>
+              <rect x="30" y="44" width="4" height="4" fill="#1A1F24"/>
+              <rect x="24" y="52" width="4" height="4" fill="#1A1F24"/>
+              <rect x="36" y="50" width="4" height="4" fill="#1A1F24"/>
+              <rect x="48" y="52" width="4" height="4" fill="#1A1F24"/>
+              <rect x="56" y="56" width="4" height="4" fill="#1A1F24"/>
+              <rect x="44" y="58" width="4" height="4" fill="#1A1F24"/>
+              <rect x="24" y="58" width="4" height="4" fill="#1A1F24"/>
+              <rect x="30" y="56" width="4" height="4" fill="#1A1F24"/>
+            </svg>
+          </div>
+          <div class="s3-preview">
+            MIA HAS EPILEPSY&#10;
+            SEIZURE TYPE: Tonic-clonic&#10;
+            ➤ Roll on LEFT side&#10;
+            ➤ Call 911 if &gt; 5 min&#10;
+            MAMA: +63912•••••••
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;z-index:30;">
+    <span style="font-size:10px;font-weight:800;color:rgba(255,255,255,0.4);font-family:sans-serif;letter-spacing:1px;">STEADY</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- SLIDE 4: Seizure History                    -->
+<!-- ══════════════════════════════════════════ -->
+<div class="slide s4-bg">
+  <div class="deco">
+    <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+      <polyline points="0,80 50,80 50,30 100,30" fill="none" stroke="rgba(46,93,87,0.12)" stroke-width="6" stroke-linecap="square"/>
+      <polyline points="360,530 310,530 310,580 260,580" fill="none" stroke="rgba(46,93,87,0.12)" stroke-width="6" stroke-linecap="square"/>
+    </svg>
+  </div>
+
+  <div class="headline">
+    <h1 style="color:#1A1F24;">Log every seizure.<br>Find every pattern.</h1>
+    <p style="color:#5A6470;">Track triggers, weather, and duration · Export to PDF for your neurologist</p>
+  </div>
+
+  <div class="phone-wrap" style="bottom:-10px;">
+    <div class="phone">
+      <div class="phone-notch" style="background:#1a1a1a;"></div>
+      <div class="phone-screen s4-screen">
+        <div class="s4-header">
+          <div class="s4-title">History</div>
+          <div class="s4-export">📄 Export PDF</div>
+        </div>
+        <div class="s4-stats">
+          <div class="s4-stat"><div class="s4-stat-num" style="color:#C8312B;">3</div><div class="s4-stat-label">this month</div></div>
+          <div class="s4-stat"><div class="s4-stat-num" style="color:#D88820;">1m 42s</div><div class="s4-stat-label">avg duration</div></div>
+          <div class="s4-stat"><div class="s4-stat-num" style="color:#2E7D7A;">7d</div><div class="s4-stat-label">since last</div></div>
+        </div>
+        <!-- Log entries -->
+        <div class="s4-card">
+          <div class="s4-date-col"><div class="s4-month">MAY</div><div class="s4-day">7</div></div>
+          <div class="s4-div"></div>
+          <div class="s4-body">
+            <div class="s4-type-row"><span class="s4-type">Tonic-clonic</span><span class="s4-dur">5m 20s</span></div>
+            <div class="s4-meta">8:14 AM · 32°C Cloudy · ⚠️ Injury</div>
+            <div class="s4-trigger">Triggers: missed meds, stress</div>
+          </div>
+        </div>
+        <div class="s4-card">
+          <div class="s4-date-col"><div class="s4-month">APR</div><div class="s4-day">30</div></div>
+          <div class="s4-div"></div>
+          <div class="s4-body">
+            <div class="s4-type-row"><span class="s4-type">Absence</span><span class="s4-dur" style="color:#5A6470;background:#F4F1EC;">42s</span></div>
+            <div class="s4-meta">2:30 PM · 29°C Clear</div>
+            <div class="s4-trigger">Triggers: sleep deprivation</div>
+          </div>
+        </div>
+        <div class="s4-card">
+          <div class="s4-date-col"><div class="s4-month">APR</div><div class="s4-day">22</div></div>
+          <div class="s4-div"></div>
+          <div class="s4-body">
+            <div class="s4-type-row"><span class="s4-type">Focal</span><span class="s4-dur">1m 8s</span></div>
+            <div class="s4-meta">10:45 PM · 27°C Rain</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;z-index:30;">
+    <span style="font-size:10px;font-weight:800;color:rgba(26,31,36,0.25);font-family:sans-serif;letter-spacing:1px;">STEADY</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- SLIDE 5: Nearby Doctors Map                 -->
+<!-- ══════════════════════════════════════════ -->
+<div class="slide s5-bg">
+  <div class="deco">
+    <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+      <polyline points="0,80 50,80 50,30 100,30" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="6" stroke-linecap="square"/>
+      <polyline points="0,108 30,108 30,58 80,58" fill="none" stroke="rgba(255,255,255,0.10)" stroke-width="6" stroke-linecap="square"/>
+      <polyline points="360,530 310,530 310,580 260,580" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="6" stroke-linecap="square"/>
+    </svg>
+  </div>
+
+  <div class="headline">
+    <h1 style="color:#fff;">Find specialists<br>near you.</h1>
+    <p style="color:rgba(255,255,255,0.7);">Epileptologists · Pediatric Neurologists · Epilepsy Centers</p>
+  </div>
+
+  <div class="phone-wrap" style="bottom:-10px;">
+    <div class="phone">
+      <div class="phone-notch"></div>
+      <div class="phone-screen s5-screen">
+        <div class="s5-header">
+          <div class="s5-icon">🧠</div>
+          <div>
+            <div style="font-size:8px;color:#8B95A1;font-family:sans-serif;">Find a specialist</div>
+            <div class="s5-title">Nearby Doctors</div>
+          </div>
+          <div style="margin-left:auto;display:flex;gap:4px;">
+            <div style="padding:4px 6px;background:#EDE8E0;border-radius:5px;font-size:9px;">☰</div>
+            <div style="padding:4px 6px;background:#2E7D7A;border-radius:5px;font-size:9px;color:#fff;">🗺</div>
+          </div>
+        </div>
+
+        <!-- Map simulation -->
+        <div class="s5-map">
+          <div class="s5-map-bg"></div>
+          <!-- Roads -->
+          <div class="s5-road-h" style="top:40%"></div>
+          <div class="s5-road-h" style="top:65%"></div>
+          <div class="s5-road-v" style="left:35%"></div>
+          <div class="s5-road-v" style="left:65%"></div>
+
+          <!-- Pins -->
+          <div style="position:absolute;top:18%;left:30%;transform:translate(-50%,-100%)">
+            <div style="width:20px;height:20px;border-radius:10px;background:#C8312B;display:flex;align-items:center;justify-content:center;font-size:10px;box-shadow:0 2px 8px rgba(0,0,0,0.3);">🏥</div>
+          </div>
+          <div style="position:absolute;top:38%;left:60%;transform:translate(-50%,-100%)">
+            <div style="width:20px;height:20px;border-radius:10px;background:#2E7D7A;display:flex;align-items:center;justify-content:center;font-size:10px;box-shadow:0 2px 8px rgba(0,0,0,0.3);">🧠</div>
+          </div>
+          <div style="position:absolute;top:55%;left:45%;transform:translate(-50%,-100%)">
+            <div style="width:20px;height:20px;border-radius:10px;background:#2E7D7A;display:flex;align-items:center;justify-content:center;font-size:10px;box-shadow:0 2px 8px rgba(0,0,0,0.3);">🔬</div>
+          </div>
+          <!-- User location dot -->
+          <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:12px;height:12px;border-radius:6px;background:#2196F3;box-shadow:0 0 0 3px rgba(33,150,243,0.3);"></div>
+
+          <!-- Card overlay -->
+          <div class="s5-map-card">
+            <div>
+              <div class="s5-card-name">Naga City Neurology Clinic</div>
+              <div class="s5-card-addr">1.2 km · ⭐ 4.8</div>
+            </div>
+            <div class="s5-dir-btn">Directions</div>
+          </div>
+        </div>
+
+        <div class="s5-pill-row">
+          <div class="s5-pill" style="background:#2E7D7A;color:#fff;">🧠 Neurologist</div>
+          <div class="s5-pill" style="background:#EDE8E0;color:#5A6470;">3 km radius</div>
+          <div class="s5-pill" style="background:#EDE8E0;color:#5A6470;">8 results</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;z-index:30;">
+    <span style="font-size:10px;font-weight:800;color:rgba(255,255,255,0.4);font-family:sans-serif;letter-spacing:1px;">STEADY</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- SLIDE 6: Privacy Promise                    -->
+<!-- ══════════════════════════════════════════ -->
+<div class="slide s6-bg">
+  <div class="deco">
+    <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+      <polyline points="0,80 50,80 50,30 100,30" fill="none" stroke="rgba(46,125,122,0.2)" stroke-width="6" stroke-linecap="square"/>
+      <polyline points="0,108 30,108 30,58 80,58" fill="none" stroke="rgba(46,125,122,0.12)" stroke-width="6" stroke-linecap="square"/>
+      <polyline points="360,530 310,530 310,580 260,580" fill="none" stroke="rgba(46,125,122,0.2)" stroke-width="6" stroke-linecap="square"/>
+    </svg>
+  </div>
+
+  <div class="headline">
+    <h1 style="color:#fff;">We don't sell<br>your sickness.<br><span style="font-size:22px;color:#2E7D7A;">Ever.</span></h1>
+    <p style="color:rgba(255,255,255,0.5);">No full name · No phone number required · 100% Free</p>
+  </div>
+
+  <div class="phone-wrap" style="bottom:-10px;">
+    <div class="phone">
+      <div class="phone-notch" style="background:#0a0a0a;"></div>
+      <div class="phone-screen s6-screen">
+        <div style="font-size:14px;font-weight:800;color:#1A1F24;font-family:sans-serif;margin-bottom:8px;">Settings</div>
+        <div class="s6-profile">
+          <div class="s6-avatar">M</div>
+          <div>
+            <div class="s6-name">Mia</div>
+            <div class="s6-meta">Active patient · tap to switch</div>
+          </div>
+        </div>
+        <div class="s6-privacy">
+          <div class="s6-privacy-title">PRIVACY PROMISE</div>
+          <div class="s6-privacy-quote">"We don't sell your sickness. We don't track your identity. We only track what helps you stay safe."</div>
+          <div class="s6-privacy-point">✓ No full name stored anywhere</div>
+          <div class="s6-privacy-point">✓ No phone number required</div>
+          <div class="s6-privacy-point">✓ 100% free. Always.</div>
+        </div>
+        <div class="s6-free">
+          <div class="s6-free-main">100% Free · Always</div>
+          <div class="s6-free-sub">Built by a dad, for every family.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;z-index:30;">
+    <span style="font-size:10px;font-weight:800;color:rgba(46,125,122,0.5);font-family:sans-serif;letter-spacing:1px;">STEADY</span>
+  </div>
+</div>
+
+</body>
+</html>

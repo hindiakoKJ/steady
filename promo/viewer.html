@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=360, initial-scale=1"/>
+<title>Steady Promo Viewer</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 360px; height: 640px; overflow: hidden; }
+</style>
+</head>
+<body>
+<script>
+// Load slide number from URL param ?s=1..6
+const n = parseInt(new URLSearchParams(location.search).get('s') || '1')
+document.title = `Steady Promo - Slide ${n}`
+// Redirect to main page with anchor
+location.href = `promo-all.html#slide-${n}`
+</script>
+</body>
+</html>

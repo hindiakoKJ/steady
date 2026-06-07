@@ -26,16 +26,18 @@
         "backgroundColor": "#5B5BD6"
       },
       "package": "ph.hnscorpph.steady",
-      "versionCode": 1,
+      "versionCode": 24,
       "permissions": [
         "INTERNET",
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
         "VIBRATE",
-        "SEND_SMS",
         "POST_NOTIFICATIONS",
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION"
+      ],
+      "blockedPermissions": [
+        "android.permission.ACTIVITY_RECOGNITION"
       ]
     },
     "web": {
@@ -79,7 +81,7 @@
         "origin": false
       },
       "eas": {
-        "projectId": "474071af-a82b-4d86-8e8b-b0e2c080db77"
+        "projectId": "072e4936-0331-462c-8e16-69a5ec3dcfb3"
       }
     }
   }
