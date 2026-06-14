@@ -10,7 +10,7 @@ const copy = {
     subtitle: 'Built by a father of two children with epilepsy. For every family living with epilepsy — children, adults, and the elderly.',
     freeBadge: '100% Free. Always.',
     freeNote: 'No subscriptions. No Pro version. No paywalls. Safety should not have a price tag.',
-    ctaApp: 'Get the App (Coming Soon)',
+    ctaApp: 'Get it on Google Play',
     ctaLearn: 'Our Privacy Promise ↓',
     stat1: 'Free',
     stat1Label: 'Forever. No paywalls.',
@@ -25,7 +25,7 @@ const copy = {
     subtitle: 'Ginawa ng isang amang may dalawang anak na may epilepsy. Para sa bawat pamilyang may epilepsy — bata, matanda, at matatanda.',
     freeBadge: '100% Libre. Palagi.',
     freeNote: 'Walang subscription. Walang Pro version. Walang bayad. Ang kaligtasan ay hindi dapat bayaran.',
-    ctaApp: 'I-download ang App (Paparating)',
+    ctaApp: 'I-download sa Google Play',
     ctaLearn: 'Ang Aming Pangako sa Privacy ↓',
     stat1: 'Libre',
     stat1Label: 'Magpakailanman. Walang bayad.',
@@ -76,12 +76,20 @@ export function HeroSection({ lang }: { lang: Lang }) {
 
       {/* CTA buttons */}
       <div className="flex flex-col sm:flex-row gap-4 mb-16">
-        <button
-          disabled
-          className="bg-emerald-600 text-white font-semibold px-8 py-3 rounded-xl opacity-70 cursor-not-allowed"
+        <a
+          href="https://play.google.com/store/apps/details?id=ph.hnscorpph.steady"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-3 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-8 py-3 rounded-xl transition-colors"
         >
+          <svg viewBox="30 336.7 120.9 129.2" width="18" height="18" fill="white" aria-hidden="true">
+            <path d="M119.2,421.2c15.3-8.4,27-14.8,28-15.3c3.2-1.7,6.5-6.2,28,6.5c6.7,3.9,12.1,7.2,16.4,9.7L119.2,421.2z"/>
+            <path d="M32,411.4l29.8,16.7l25.9-25.9L32,357v54.4V411.4z"/>
+            <path d="M139.8,343.7L89,396.1l-25.9-25.9l75.8-42.6C139.1,327.6,140.1,338.5,139.8,343.7z"/>
+            <path d="M89,402.3l-25.3,25.3l75.4,42.4c1.4-1.7,1.9-11.8,1.4-16.2L89,402.3z"/>
+          </svg>
           {t.ctaApp}
-        </button>
+        </a>
         <a
           href="#privacy"
           className="border border-slate-600 text-slate-300 hover:text-white hover:border-slate-400 font-semibold px-8 py-3 rounded-xl transition-colors"
