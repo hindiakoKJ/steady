@@ -35,6 +35,13 @@ const copy = {
     bdoLabel: 'BDO InstaPay (Philippines)',
     bdoNote: 'Scan with any Philippine banking app',
     bdoFree: 'BDO-to-BDO transfers are free. Fees may apply for other banks.',
+    bpiLabel: 'BPI Bank Transfer (Philippines)',
+    bpiNote: 'Transfer via any Philippine banking app',
+    bpiDetails: [
+      { key: 'Bank', value: 'Bank of the Philippine Islands (BPI)' },
+      { key: 'Account Name', value: 'HNS CORP PH SOLUTIONS OPC' },
+      { key: 'Account Number', value: '1141001682' },
+    ],
     kofiLabel: 'Ko-fi (Global)',
     kofiBtn: 'Support on Ko-fi',
     kofiNote: 'Pay via PayPal — works internationally',
@@ -86,6 +93,13 @@ const copy = {
     bdoLabel: 'BDO InstaPay (Pilipinas)',
     bdoNote: 'I-scan gamit ang anumang banking app sa Pilipinas',
     bdoFree: 'Libre ang BDO-to-BDO. Maaaring may bayad para sa ibang bangko.',
+    bpiLabel: 'BPI Bank Transfer (Pilipinas)',
+    bpiNote: 'Mag-transfer gamit ang anumang banking app sa Pilipinas',
+    bpiDetails: [
+      { key: 'Bangko', value: 'Bank of the Philippine Islands (BPI)' },
+      { key: 'Pangalan ng Account', value: 'HNS CORP PH SOLUTIONS OPC' },
+      { key: 'Numero ng Account', value: '1141001682' },
+    ],
     kofiLabel: 'Ko-fi (Global)',
     kofiBtn: 'Suportahan sa Ko-fi',
     kofiNote: 'Bayad sa pamamagitan ng PayPal — gumagana sa buong mundo',
@@ -155,8 +169,8 @@ export function AlwaysFree({ lang }: { lang: Lang }) {
           ))}
         </div>
 
-        {/* Payment methods — BDO + Ko-fi side by side */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        {/* Payment methods — BDO + BPI + Ko-fi */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
 
           {/* BDO InstaPay */}
           <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 text-center">
@@ -172,6 +186,20 @@ export function AlwaysFree({ lang }: { lang: Lang }) {
               />
             </div>
             <p className="text-slate-500 text-xs mt-3">{t.bdoFree}</p>
+          </div>
+
+          {/* BPI */}
+          <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 flex flex-col justify-center gap-3">
+            <p className="text-sm font-semibold text-slate-300">{t.bpiLabel}</p>
+            <p className="text-slate-500 text-xs">{t.bpiNote}</p>
+            <div className="space-y-2 mt-1">
+              {t.bpiDetails.map((row) => (
+                <div key={row.key} className="flex flex-col">
+                  <span className="text-slate-500 text-xs">{row.key}</span>
+                  <span className="text-slate-200 text-sm font-mono">{row.value}</span>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Ko-fi */}
