@@ -55,6 +55,13 @@ const copy = {
       { key: 'SWIFT / BIC', value: 'BNORPHMM' },
       { key: 'Bank Address', value: 'BDO Head Office, 7899 Makati Ave, Makati City 0726, Philippines' },
     ],
+    intlDetails2: [
+      { key: 'Bank', value: 'Bank of the Philippine Islands (BPI)' },
+      { key: 'Account Name', value: 'HNS CORP PH SOLUTIONS OPC' },
+      { key: 'Account Number', value: '1141001682' },
+      { key: 'SWIFT / BIC', value: 'BOPIPHMM' },
+      { key: 'Bank Address', value: 'BPI Head Office, BPI Building, Ayala Ave cor Paseo de Roxas, Makati City, Philippines' },
+    ],
     intlWarning: 'Your bank may charge a wire transfer fee. Please confirm with your bank before sending.',
     disclaimer:
       'You will never be asked to donate inside the app. This section exists only for those who want to help.',
@@ -112,6 +119,13 @@ const copy = {
       { key: 'Numero ng Account', value: '006826005181' },
       { key: 'SWIFT / BIC', value: 'BNORPHMM' },
       { key: 'Address ng Bangko', value: 'BDO Head Office, 7899 Makati Ave, Makati City 0726, Philippines' },
+    ],
+    intlDetails2: [
+      { key: 'Bangko', value: 'Bank of the Philippine Islands (BPI)' },
+      { key: 'Pangalan ng Account', value: 'HNS CORP PH SOLUTIONS OPC' },
+      { key: 'Numero ng Account', value: '1141001682' },
+      { key: 'SWIFT / BIC', value: 'BOPIPHMM' },
+      { key: 'Address ng Bangko', value: 'BPI Head Office, BPI Building, Ayala Ave cor Paseo de Roxas, Makati City, Philippines' },
     ],
     intlWarning: 'Maaaring may wire transfer fee ang iyong bangko. Kumpirmahin muna bago magpadala.',
     disclaimer:
@@ -243,8 +257,20 @@ export function AlwaysFree({ lang }: { lang: Lang }) {
 
           {showIntl && (
             <div className="px-6 pb-6 border-t border-slate-700">
-              <div className="mt-4 space-y-3">
+              {/* BDO */}
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mt-4 mb-2">Banco de Oro (BDO)</p>
+              <div className="space-y-3">
                 {t.intlDetails.map((row) => (
+                  <div key={row.key} className="flex flex-col sm:flex-row sm:gap-4">
+                    <span className="text-slate-500 text-xs w-36 shrink-0 pt-0.5">{row.key}</span>
+                    <span className="text-slate-200 text-sm font-mono break-all">{row.value}</span>
+                  </div>
+                ))}
+              </div>
+              {/* BPI */}
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mt-6 mb-2">Bank of the Philippine Islands (BPI)</p>
+              <div className="space-y-3">
+                {t.intlDetails2.map((row) => (
                   <div key={row.key} className="flex flex-col sm:flex-row sm:gap-4">
                     <span className="text-slate-500 text-xs w-36 shrink-0 pt-0.5">{row.key}</span>
                     <span className="text-slate-200 text-sm font-mono break-all">{row.value}</span>
