@@ -230,7 +230,7 @@ export default function SeizureActive() {
           latitude: w?.lat,
           longitude: w?.lon,
         })
-        await AsyncStorage.removeItem('@steady/activeSeizureLogId')
+        await AsyncStorage.multiRemove(['@steady/activeSeizureLogId', '@steady/activeSeizureStartedAt'])
       }
       router.back()
     } catch {

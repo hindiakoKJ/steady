@@ -3,12 +3,19 @@ import { StyleSheet } from 'react-native'
 import { Tabs } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { STEADY } from '@repo/ui'
 import { registerForPushNotifications } from '@/lib/notifications'
 
 export const PUSH_TOKEN_KEY = '@steady/expoPushToken'
 
 export default function TabLayout() {
+  // Edge-to-edge (forced by targetSdk 36 on Android 15+) draws the app behind
+  // the system navigation bar — the tab bar must clear it by the real inset.
+  // Devices that report no bottom inset fall back to the original 24px.
+  const insets = useSafeAreaInsets()
+  const bottomPad = Math.max(insets.bottom, 24)
+
   // Request push permission once when the authenticated shell mounts.
   // Token is stored locally; household members link their device via Contacts screen.
   useEffect(() => {
@@ -25,8 +32,8 @@ export default function TabLayout() {
           borderTopWidth: StyleSheet.hairlineWidth,
           borderTopColor: STEADY.border.dark,
           paddingTop: 8,
-          paddingBottom: 24,
-          height: 72,
+          paddingBottom: bottomPad,
+          height: 48 + bottomPad,
         },
         tabBarActiveTintColor: STEADY.accent.base,
         tabBarInactiveTintColor: STEADY.ink.onDarkTer,

@@ -9,6 +9,7 @@ import {
   TextInput,
   ActivityIndicator,
 } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { patientsApi } from '@/lib/api'
 import { authStorage } from '@/lib/auth'
@@ -62,7 +63,7 @@ export default function PatientSelectScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Select Patient</Text>
         <Text style={styles.subtitle}>All patients in your household</Text>
@@ -135,7 +136,7 @@ export default function PatientSelectScreen() {
           }
         />
       )}
-    </View>
+    </SafeAreaView>
   )
 }
 

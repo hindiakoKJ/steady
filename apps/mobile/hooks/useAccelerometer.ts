@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Accelerometer } from 'expo-sensors'
 import { Vibration } from 'react-native'
+import { SeizureDetector, normalizeSensorTimestamp } from '@/lib/seizureDetector'
 
 interface AccelerometerState {
   isMonitoring: boolean
@@ -8,84 +9,85 @@ interface AccelerometerState {
   startMonitoring: () => void
   stopMonitoring: () => void
   resetAlert: () => void
+  /** Re-arm the latched detector after a cooldown (mirrors the background
+   *  service's cooldowns) — without this, one confirmed detection would leave
+   *  the monitor latched forever while the UI still says it's active. */
+  rearmAfter: (ms: number) => void
 }
 
-// Detects rhythmic shaking in the 3–8 Hz range, which is characteristic of
-// tonic-clonic (grand mal) seizures. This is a supplementary tool, not a
-// medical diagnostic device.
+// In-app (foreground) passive monitor. Detection algorithm lives in
+// lib/seizureDetector.ts, shared with the Android background service.
+// NOTE: expo-sensors stops delivering when the activity pauses, so this hook
+// only monitors while the app is open — on Android the background service
+// (lib/backgroundMonitor.ts) is the primary path. This is a supplementary
+// tool, not a medical diagnostic device.
 export function useAccelerometer(onSeizureDetected: () => void): AccelerometerState {
   const [isMonitoring, setIsMonitoring] = useState(false)
   const [alertTriggered, setAlertTriggered] = useState(false)
 
   const subscriptionRef = useRef<ReturnType<typeof Accelerometer.addListener> | null>(null)
-  const peaksRef = useRef<number[]>([])
-  const lastMagnitudeRef = useRef<number>(0)
-  const sustainedCountRef = useRef<number>(0)
-  const alertFiredRef = useRef<boolean>(false)
+  const detectorRef = useRef(new SeizureDetector())
+  const rearmTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const clearRearmTimer = () => {
+    if (rearmTimerRef.current) {
+      clearTimeout(rearmTimerRef.current)
+      rearmTimerRef.current = null
+    }
+  }
 
   const startMonitoring = () => {
-    if (isMonitoring) return
-    alertFiredRef.current = false
-    peaksRef.current = []
-    sustainedCountRef.current = 0
+    // Guard on the ref, not React state — state is render-captured, so two
+    // calls in the same render epoch would both see false and leak a listener
+    if (subscriptionRef.current) return
+    clearRearmTimer()
+    detectorRef.current.reset()
     setIsMonitoring(true)
 
-    // 20 Hz sample rate — sufficient to detect 3–8 Hz peaks
-    Accelerometer.setUpdateInterval(50)
+    // 20 ms = 50 Hz: fast sampling lets the detector's ~14 Hz low-pass remove
+    // vehicle vibration instead of letting it alias into the seizure band
+    Accelerometer.setUpdateInterval(20)
 
-    subscriptionRef.current = Accelerometer.addListener(({ x, y, z }) => {
-      const magnitude = Math.sqrt(x * x + y * y + z * z)
-      const prev = lastMagnitudeRef.current
-
-      // Detect a peak: magnitude crosses above 1.5g from below
-      if (prev < 1.5 && magnitude >= 1.5) {
-        const now = Date.now()
-        peaksRef.current.push(now)
-
-        // Keep only peaks from the last 2 seconds
-        peaksRef.current = peaksRef.current.filter((t) => now - t < 2000)
-
-        // Count peaks per second (peaks in last 1 second)
-        const recentPeaks = peaksRef.current.filter((t) => now - t < 1000)
-        const hz = recentPeaks.length
-
-        if (hz >= 3 && hz <= 8) {
-          sustainedCountRef.current += 1
-        } else {
-          sustainedCountRef.current = 0
-        }
-
-        // 3–8 Hz sustained for ~10 seconds (20 positive ticks)
-        if (sustainedCountRef.current >= 20 && !alertFiredRef.current) {
-          alertFiredRef.current = true
-          setAlertTriggered(true)
-          Vibration.vibrate([0, 500, 200, 500, 200, 500])
-          onSeizureDetected()
-        }
+    subscriptionRef.current = Accelerometer.addListener(({ x, y, z, timestamp }) => {
+      // expo-sensors already reports in units of g; hardware timestamps
+      // survive JS-thread congestion
+      if (detectorRef.current.addSample(x, y, z, normalizeSensorTimestamp(timestamp))) {
+        setAlertTriggered(true)
+        Vibration.vibrate([0, 500, 200, 500, 200, 500])
+        onSeizureDetected()
       }
-
-      lastMagnitudeRef.current = magnitude
     })
   }
 
   const stopMonitoring = () => {
     subscriptionRef.current?.remove()
     subscriptionRef.current = null
+    clearRearmTimer()
     setIsMonitoring(false)
-    peaksRef.current = []
-    sustainedCountRef.current = 0
+    detectorRef.current.reset()
   }
 
   const resetAlert = () => {
-    alertFiredRef.current = false
+    clearRearmTimer()
+    detectorRef.current.reset()
     setAlertTriggered(false)
+  }
+
+  const rearmAfter = (ms: number) => {
+    clearRearmTimer()
+    rearmTimerRef.current = setTimeout(() => {
+      rearmTimerRef.current = null
+      detectorRef.current.reset()
+      setAlertTriggered(false)
+    }, ms)
   }
 
   useEffect(() => {
     return () => {
       subscriptionRef.current?.remove()
+      if (rearmTimerRef.current) clearTimeout(rearmTimerRef.current)
     }
   }, [])
 
-  return { isMonitoring, alertTriggered, startMonitoring, stopMonitoring, resetAlert }
+  return { isMonitoring, alertTriggered, startMonitoring, stopMonitoring, resetAlert, rearmAfter }
 }

@@ -47,7 +47,14 @@ export const authStorage = {
   async clearSession() {
     await Promise.all([
       SecureStore.deleteItemAsync(SECURE_KEY),
-      AsyncStorage.multiRemove(Object.values(KEYS)),
+      AsyncStorage.multiRemove([
+        ...Object.values(KEYS),
+        // Active-seizure state belongs to the session — a stale log id would
+        // otherwise leak into the next account's alerts
+        '@steady/activeSeizureLogId',
+        '@steady/activeSeizureStartedAt',
+        '@steady/monitorEnabled',
+      ]),
     ])
   },
 

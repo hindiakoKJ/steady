@@ -1,5 +1,6 @@
 import * as Notifications from 'expo-notifications'
 import { Platform } from 'react-native'
+import Constants from 'expo-constants'
 import { notificationsApi } from './api'
 
 // Configure how notifications appear when the app is in the foreground
@@ -42,9 +43,13 @@ export async function registerForPushNotifications(): Promise<string | null> {
   }
 
   try {
-    const tokenData = await Notifications.getExpoPushTokenAsync({
-      projectId: '474071af-a82b-4d86-8e8b-b0e2c080db77',
-    })
+    // Derive the projectId from app config — the previous hardcoded id
+    // ('474071af-…') belonged to a different EAS project, so tokens minted
+    // under it never reached this app's push credentials.
+    const projectId =
+      (Constants.expoConfig?.extra as { eas?: { projectId?: string } } | undefined)?.eas
+        ?.projectId ?? '072e4936-0331-462c-8e16-69a5ec3dcfb3'
+    const tokenData = await Notifications.getExpoPushTokenAsync({ projectId })
     return tokenData.data
   } catch {
     return null

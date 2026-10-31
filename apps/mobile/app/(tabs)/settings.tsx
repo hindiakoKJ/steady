@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useFocusEffect } from 'expo-router'
-import { View, Text, ScrollView, Pressable, StyleSheet, Alert } from 'react-native'
+import { View, Text, ScrollView, Pressable, StyleSheet, Alert, Platform } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
@@ -9,6 +9,7 @@ import { STEADY } from '@repo/ui'
 import { SettingRow, SettingsGroup } from '@/components/SettingsRow'
 import { contactsApi, seizureLogsApi } from '@/lib/api'
 import { authStorage } from '@/lib/auth'
+import { backgroundMonitor } from '@/lib/backgroundMonitor'
 import { exportEmergencyCard } from '@/lib/emergency-card-pdf'
 import type { EmergencyContact } from '@repo/types'
 
@@ -68,6 +69,11 @@ export default function SettingsScreen() {
         text: 'Sign Out',
         style: 'destructive',
         onPress: async () => {
+          // A signed-out session has no auth token — a still-armed monitor
+          // would detect but fail every alert. Stop must never block sign-out.
+          if (Platform.OS === 'android') {
+            try { await backgroundMonitor.stop() } catch { /* proceed with sign-out */ }
+          }
           await authStorage.clearSession()
           router.replace('/auth/login')
         },

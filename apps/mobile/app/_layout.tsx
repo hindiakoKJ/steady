@@ -1,9 +1,49 @@
-import { Component, type ReactNode } from 'react'
+import { Component, useEffect, type ReactNode } from 'react'
 import { View, Text } from 'react-native'
-import { Stack, SplashScreen } from 'expo-router'
+import { Stack, SplashScreen, router } from 'expo-router'
+import * as Notifications from 'expo-notifications'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 // Keep native splash visible until auth check resolves in index.tsx
 SplashScreen.preventAutoHideAsync().catch(() => {})
+
+// ─── Notification tap → navigation ───────────────────────────────────────────
+// The Android background monitor fires local notifications (countdown, BEACON
+// fired). Tapping one whose data asks for seizure-active navigates there —
+// guarded on an active log so stale notification history can't misnavigate.
+function useNotificationNavigation() {
+  useEffect(() => {
+    const navigate = async (response: Notifications.NotificationResponse | null) => {
+      const screen = response?.notification.request.content.data?.screen
+      if (screen !== 'seizure-active') return
+      const activeId = await AsyncStorage.getItem('@steady/activeSeizureLogId')
+      if (!activeId) return
+      const startedAt = await AsyncStorage.getItem('@steady/activeSeizureStartedAt')
+      router.push({
+        pathname: '/seizure-active',
+        params: startedAt ? { startedAt } : undefined,
+      })
+    }
+
+    // Cold start from a notification tap — small delay so the auth gate in
+    // app/index.tsx settles before we push on top of it. The response is
+    // cleared once consumed: the FGS keeps the process alive for days, so an
+    // uncleared response would replay on every later activity recreation.
+    Notifications.getLastNotificationResponseAsync()
+      .then((response) => {
+        if (!response) return
+        Notifications.clearLastNotificationResponseAsync().catch(() => {})
+        setTimeout(() => navigate(response), 600)
+      })
+      .catch(() => {})
+
+    const sub = Notifications.addNotificationResponseReceivedListener((response) => {
+      navigate(response)
+      Notifications.clearLastNotificationResponseAsync().catch(() => {})
+    })
+    return () => sub.remove()
+  }, [])
+}
 
 // ─── Visible error boundary ──────────────────────────────────────────────────
 interface EBState { error: Error | null }
@@ -33,6 +73,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, EBState> {
 }
 
 export default function RootLayout() {
+  useNotificationNavigation()
   return (
     <ErrorBoundary>
       <Stack screenOptions={{ headerShown: false }} />

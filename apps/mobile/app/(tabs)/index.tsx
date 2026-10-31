@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { useFocusEffect } from 'expo-router'
 import {
   View, Text, StyleSheet, Pressable, Alert, Animated, Easing,
-  Modal,
+  Modal, Platform, Linking,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { STEADY } from '@repo/ui'
 import { fetchCurrentWeatherWithReason, getCurrentLocation } from '@/hooks/useWeather'
 import { useAccelerometer } from '@/hooks/useAccelerometer'
+import { backgroundMonitor } from '@/lib/backgroundMonitor'
 import { seizureLogsApi, contactsApi } from '@/lib/api'
 import { authStorage } from '@/lib/auth'
 
@@ -19,6 +20,7 @@ import * as ExpoSms from 'expo-sms'
 import { SMS_BEACON_KEY } from '@/app/(tabs)/settings'
 
 const MONITOR_DISCLAIMER_KEY = '@steady/monitorDisclaimerSeen'
+const BATTERY_TIP_KEY = '@steady/batteryTipSeen'
 
 // ─── SMS Preview State ────────────────────────────────────────────────────────
 interface SmsPreview {
@@ -43,6 +45,13 @@ export default function EmergencyHub() {
 
   // Passive monitor disclaimer modal
   const [monitorDisclaimerVisible, setMonitorDisclaimerVisible] = useState(false)
+
+  // Android: monitoring runs in a foreground service (works with screen off);
+  // iOS keeps the in-app expo-sensors hook.
+  const [bgMonitoring, setBgMonitoring] = useState(false)
+  // Guards the toggle while an async start/stop is in flight — a double-tap
+  // could otherwise enqueue overlapping service starts
+  const [monitorBusy, setMonitorBusy] = useState(false)
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const cancelledRef = useRef(false)
 
@@ -76,8 +85,23 @@ export default function EmergencyHub() {
         }
       }
       load()
+      // Reflect the true service state (user may have stopped it from the
+      // notification drawer's task manager while the app was backgrounded)
+      if (Platform.OS === 'android') {
+        setBgMonitoring(backgroundMonitor.isRunning())
+      }
     }, [])
   )
+
+  // Re-arm on launch if the user left monitoring on — covers app relaunch
+  // after swipe-away, reboot, or task-manager Stop (foreground start is legal)
+  useEffect(() => {
+    if (Platform.OS !== 'android') return
+    backgroundMonitor
+      .rearmIfEnabled()
+      .then((running) => setBgMonitoring(running))
+      .catch(() => {})
+  }, [])
 
   // ─── Actual fire (called after countdown) ──────────────────────────────────
   const fireSmsAndBeacon = useCallback(async (preview: SmsPreview) => {
@@ -90,7 +114,7 @@ export default function EmergencyHub() {
           const status = beaconErr?.response?.status
           if (status === 404 || status === 403) {
             // Stale log ID from a previous session/build — clear it and fall through to SMS
-            await AsyncStorage.removeItem('@steady/activeSeizureLogId')
+            await AsyncStorage.multiRemove(['@steady/activeSeizureLogId', '@steady/activeSeizureStartedAt'])
           } else {
             throw beaconErr  // real server error — surface to user
           }
@@ -161,32 +185,87 @@ export default function EmergencyHub() {
     setBeaconLoading(false)
   }, [])
 
+  // Ref keeps the latest handleAura visible to the []-dep callback below —
+  // without it the first-render closure (currentPatient: null) would be called
+  const handleAuraRef = useRef<() => void>(() => {})
+
   const onPassiveSeizureDetected = useCallback(() => {
     Alert.alert(
       '⚠️ Movement Detected',
       'Rhythmic shaking detected. Is this a seizure?',
       [
-        { text: 'No, dismiss', style: 'cancel', onPress: () => accel.resetAlert() },
-        { text: 'Yes — LOG IT', onPress: () => handleAura() },
+        // Cooldowns mirror the background service: 60s after a false alarm,
+        // 5min after a confirmed one — then the detector re-arms on its own
+        { text: 'No, dismiss', style: 'cancel', onPress: () => accel.rearmAfter(60_000) },
+        {
+          text: 'Yes — LOG IT',
+          onPress: () => {
+            handleAuraRef.current()
+            accel.rearmAfter(5 * 60_000)
+          },
+        },
       ]
     )
   }, [])
 
   const accel = useAccelerometer(onPassiveSeizureDetected)
+  const monitorActive = Platform.OS === 'android' ? bgMonitoring : accel.isMonitoring
+
+  // Start monitoring — Android arms the foreground service, iOS the in-app hook
+  const startMonitor = useCallback(async () => {
+    if (Platform.OS === 'android') {
+      setMonitorBusy(true)
+      try {
+        await backgroundMonitor.start()
+        setBgMonitoring(true)
+        // One-time battery guidance — OEM battery managers (Xiaomi/Huawei/Oppo)
+        // kill background services overnight unless the user exempts the app
+        const tipSeen = await AsyncStorage.getItem(BATTERY_TIP_KEY)
+        if (tipSeen !== 'true') {
+          await AsyncStorage.setItem(BATTERY_TIP_KEY, 'true')
+          Alert.alert(
+            'Monitoring runs with screen off',
+            'Steady now watches for seizure-like movement even when the phone is locked.\n\nFor overnight reliability, set Steady\'s battery usage to "Unrestricted":\nSettings → Apps → Steady → Battery.\n\nXiaomi, Huawei, and Oppo phones may stop monitoring during sleep without this.',
+            [
+              { text: 'Open App Settings', onPress: () => Linking.openSettings() },
+              { text: 'Later', style: 'cancel' },
+            ],
+          )
+        }
+      } catch {
+        Alert.alert('Monitor Error', 'Could not start background monitoring. Please try again.')
+      } finally {
+        setMonitorBusy(false)
+      }
+    } else {
+      accel.startMonitoring()
+    }
+  }, [accel])
 
   // Show one-time disclaimer before starting passive monitor for the first time
   const handleMonitorToggle = useCallback(async () => {
-    if (accel.isMonitoring) {
-      accel.stopMonitoring()
+    if (monitorBusy) return
+    if (monitorActive) {
+      if (Platform.OS === 'android') {
+        setMonitorBusy(true)
+        try {
+          await backgroundMonitor.stop()
+          setBgMonitoring(false)
+        } finally {
+          setMonitorBusy(false)
+        }
+      } else {
+        accel.stopMonitoring()
+      }
       return
     }
     const seen = await AsyncStorage.getItem(MONITOR_DISCLAIMER_KEY)
     if (seen === 'true') {
-      accel.startMonitoring()
+      startMonitor()
     } else {
       setMonitorDisclaimerVisible(true)
     }
-  }, [accel])
+  }, [monitorActive, monitorBusy, accel, startMonitor])
 
   const handleAura = useCallback(async () => {
     if (!currentPatient?.id) {
@@ -203,7 +282,10 @@ export default function EmergencyHub() {
         startedAt,
         triggeredBy: 'AURA',
       })
-      await AsyncStorage.setItem('@steady/activeSeizureLogId', log.id)
+      await AsyncStorage.multiSet([
+        ['@steady/activeSeizureLogId', log.id],
+        ['@steady/activeSeizureStartedAt', startedAt],
+      ])
       // Navigate immediately — timer starts from startedAt
       router.push({ pathname: '/seizure-active', params: { startedAt } })
       // Fetch weather in background — write result (including failure reason) so
@@ -219,6 +301,9 @@ export default function EmergencyHub() {
       setAuraLoading(false)
     }
   }, [currentPatient, router])
+
+  // Keep the passive-detection callback pointing at the latest handleAura
+  useEffect(() => { handleAuraRef.current = handleAura }, [handleAura])
 
   const handleBeacon = useCallback(async () => {
     setBeaconLoading(true)
@@ -256,7 +341,10 @@ export default function EmergencyHub() {
         })
         activeId = log.id
         isNewLog = true
-        await AsyncStorage.setItem('@steady/activeSeizureLogId', log.id)
+        await AsyncStorage.multiSet([
+          ['@steady/activeSeizureLogId', log.id],
+          ['@steady/activeSeizureStartedAt', beaconStartedAt],
+        ])
       }
 
       // No URL in SMS — Philippine carriers (Globe/Smart) silently block
@@ -301,7 +389,7 @@ export default function EmergencyHub() {
               NOT A MEDICAL DEVICE
             </Text>
             <Text style={[s.modalMsgText, { textAlign: 'center', lineHeight: 22 }]}>
-              The accelerometer detects rhythmic shaking as a reminder only. It cannot diagnose seizures and may miss episodes or trigger false alerts.{'\n\n'}Always follow the advice of your neurologist.
+              The accelerometer detects rhythmic shaking as a reminder only. It cannot diagnose seizures and may miss episodes or trigger false alerts.{'\n\n'}For the phone to feel a seizure, keep it ON the patient (pocket or waistband) or lying directly on the mattress beside them. A nightstand or table is too far.{'\n\n'}Always follow the advice of your neurologist.
             </Text>
             <Pressable
               style={[s.modalCancelBtn, { backgroundColor: STEADY.accent.softDark, borderColor: STEADY.accent.deep, marginTop: 12 }]}
@@ -310,7 +398,7 @@ export default function EmergencyHub() {
               onPress={async () => {
                 await AsyncStorage.setItem(MONITOR_DISCLAIMER_KEY, 'true')
                 setMonitorDisclaimerVisible(false)
-                accel.startMonitoring()
+                startMonitor()
               }}
             >
               <Text style={[s.modalCancelText, { color: STEADY.accent.base }]}>I understand — turn on</Text>
@@ -393,9 +481,13 @@ export default function EmergencyHub() {
 
       {/* Status strip */}
       <View style={s.statusPill}>
-        <View style={[s.statusDot, accel.isMonitoring && s.statusDotActive]} />
+        <View style={[s.statusDot, monitorActive && s.statusDotActive]} />
         <Text style={s.statusText}>
-          {accel.isMonitoring ? 'Passive monitor active' : 'Passive monitor off'}
+          {monitorActive
+            ? Platform.OS === 'android'
+              ? 'Passive monitor active — screen can be off'
+              : 'Passive monitor active'
+            : 'Passive monitor off'}
         </Text>
       </View>
 
@@ -453,15 +545,18 @@ export default function EmergencyHub() {
 
         {/* Passive monitor toggle */}
         <Pressable
-          style={[s.actionCard, accel.isMonitoring && s.actionCardMonitorActive]}
+          style={[s.actionCard, monitorActive && s.actionCardMonitorActive, monitorBusy && s.actionCardDisabled]}
           onPress={handleMonitorToggle}
-          accessibilityLabel={accel.isMonitoring ? 'Turn off passive monitor' : 'Turn on passive monitor'}
+          disabled={monitorBusy}
+          accessibilityLabel={monitorActive ? 'Turn off passive monitor' : 'Turn on passive monitor'}
           accessibilityHint="Uses accelerometer to detect rhythmic shaking"
           accessibilityRole="button"
         >
           <Text style={s.actionCardEyebrow}>AUTO-DETECT</Text>
-          <Text style={s.actionCardTitle}>{accel.isMonitoring ? 'Monitor ON' : 'Monitor OFF'}</Text>
-          <Text style={s.actionCardSub}>Accelerometer watch</Text>
+          <Text style={s.actionCardTitle}>{monitorActive ? 'Monitor ON' : 'Monitor OFF'}</Text>
+          <Text style={s.actionCardSub}>
+            {Platform.OS === 'android' ? 'Works with screen off' : 'Accelerometer watch'}
+          </Text>
         </Pressable>
       </View>
 
